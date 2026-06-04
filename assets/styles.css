@@ -2438,45 +2438,57 @@ body.sticky-buy-active .social-proof{
 @media (max-width:760px){
   .nav-toggle{ display:inline-flex; order:3; }
   .nav-links{
-    position:fixed; top:0; right:0; bottom:0;
-    width:min(82vw,310px);
-    background:var(--bg);
-    flex-direction:column; align-items:flex-start; justify-content:flex-start;
-    padding: calc(78px + env(safe-area-inset-top, 0px)) 24px calc(20px + env(safe-area-inset-bottom, 0px));
-    gap:0;
+    position:fixed !important;
+    top:0 !important; right:0 !important; bottom:0 !important; left:auto !important;
+    width:min(82vw,310px) !important;
+    /* HARTE solide Hintergrundfarbe — kein Variable, kein Risiko */
+    background-color:#FBFAF6 !important;
+    background-image:none !important;
+    backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    /* Isolation erzwingt neuen Stacking-Context */
+    isolation:isolate;
+    flex-direction:column !important;
+    align-items:flex-start !important; justify-content:flex-start !important;
+    padding: calc(78px + env(safe-area-inset-top, 0px)) 24px calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+    gap:0 !important;
     transform:translateX(100%);
-    transition:transform .35s var(--ease);
-    z-index:120;
+    transition:transform .35s cubic-bezier(.22,.61,.36,1);
+    z-index:9999 !important;
     font-size:1.1rem;
-    border-left:1px solid var(--line);
+    border-left:1px solid #e6e1d4 !important;
+    box-shadow:-20px 0 50px rgba(0,0,0,.15) !important;
   }
   .nav-links a {
-    padding:18px 0;
-    width:100%;
-    border-bottom:1px solid var(--line);
+    padding:18px 0 !important;
+    width:100% !important;
+    border-bottom:1px solid rgba(28,27,24,.1) !important;
     font-weight:500;
-    color:var(--ink);
+    color:#1C1B18 !important;
+    background:transparent !important;
+    text-decoration:none !important;
+    display:block !important;
   }
-  .nav-links a:last-child { border-bottom:none; }
+  .nav-links a:last-child { border-bottom:none !important; }
   body.nav-open { overflow:hidden; }
-  body.nav-open .nav-links,
+  body.nav-open .nav-links {
+    transform:translateX(0) !important;
+    pointer-events: auto !important;
+  }
   body.nav-open .nav-links * {
     pointer-events: auto !important;
-    touch-action: manipulation;
   }
-  body.nav-open .nav-links{ transform:none; box-shadow:-30px 0 60px rgba(28,27,24,.25); }
-  /* Backdrop: separates DOM-Element (statt body::before) */
+  /* Backdrop: SOLIDE dunkel, KEIN backdrop-filter (verursacht Bug) */
   .nav-backdrop{
-    position:fixed; inset:0;
-    background:rgba(28,27,24,.55);
-    backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
-    z-index:110;
+    position:fixed !important;
+    inset:0 !important;
+    background-color:rgba(0,0,0,.5) !important;
+    backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    z-index:9998 !important;
     cursor:pointer;
     animation: navFade .25s ease;
   }
   @keyframes navFade { from{opacity:0} to{opacity:1} }
-  /* Active-State für Close-Button */
-  .nav-close-btn:active { background:var(--ink) !important; color:var(--bg) !important; }
+  .nav-close-btn:active { background:#1C1B18 !important; color:#FBFAF6 !important; }
 }
 @media (max-width:520px){
   .look-grid{ grid-template-columns:1fr; }
