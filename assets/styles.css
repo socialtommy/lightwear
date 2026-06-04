@@ -2465,30 +2465,18 @@ body.sticky-buy-active .social-proof{
     touch-action: manipulation;
   }
   body.nav-open .nav-links{ transform:none; box-shadow:-30px 0 60px rgba(28,27,24,.25); }
-  body.nav-open::before{
-    content:""; position:fixed; inset:0;
-    background:rgba(28,27,24,.55); z-index:110;
+  /* Backdrop: separates DOM-Element (statt body::before) */
+  .nav-backdrop{
+    position:fixed; inset:0;
+    background:rgba(28,27,24,.55);
     backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
+    z-index:110;
     cursor:pointer;
+    animation: navFade .25s ease;
   }
-  /* GROSSER Close-Button — 48px tappable, klar sichtbar */
-  body.nav-open .nav-links::before{
-    content:"";
-    position:absolute;
-    top: calc(20px + env(safe-area-inset-top, 0px));
-    right:20px;
-    width:48px; height:48px;
-    background-color:var(--panel);
-    border:1px solid var(--line);
-    border-radius:99px;
-    cursor:pointer;
-    pointer-events:auto;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%231a1a1a' stroke-width='2.5' stroke-linecap='round'><path d='m6 6 12 12M18 6 6 18'/></svg>");
-    background-repeat:no-repeat;
-    background-position:center;
-    transition: background-color .15s;
-  }
-  body.nav-open .nav-links::before:active{ background-color:var(--ink); }
+  @keyframes navFade { from{opacity:0} to{opacity:1} }
+  /* Active-State für Close-Button */
+  .nav-close-btn:active { background:var(--ink) !important; color:var(--bg) !important; }
 }
 @media (max-width:520px){
   .look-grid{ grid-template-columns:1fr; }

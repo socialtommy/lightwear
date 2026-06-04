@@ -520,28 +520,48 @@ function initChrome(){
     window.addEventListener("scroll", onScroll, { passive:true });
     onScroll();
   }
-  // Mobiles Menü
+  // Mobiles Menü — bulletproof Variante mit separater Backdrop-Div
   const toggle = document.querySelector(".nav-toggle");
   if (toggle){
-    toggle.addEventListener("click", () => {
-      const open = document.body.classList.toggle("nav-open");
-      toggle.setAttribute("aria-expanded", open);
-    });
-    document.querySelectorAll(".nav-links a").forEach(a =>
-      a.addEventListener("click", () => {
-        document.body.classList.remove("nav-open");
-        toggle.setAttribute("aria-expanded", false);
-      })
-    );
-    // Backdrop-Click schließt das Menü (NUR click — nicht touchstart, das interferiert)
-    document.addEventListener("click", (e) => {
-      if(!document.body.classList.contains("nav-open")) return;
-      const navLinks = document.querySelector(".nav-links");
-      // Schließe nur wenn Click außerhalb der Sidebar UND außerhalb vom Toggle
-      if(navLinks && !navLinks.contains(e.target) && !toggle.contains(e.target)){
-        document.body.classList.remove("nav-open");
-        toggle.setAttribute("aria-expanded", false);
+    function openNav(){
+      document.body.classList.add("nav-open");
+      toggle.setAttribute("aria-expanded", "true");
+      // Backdrop einmal hinzufügen
+      if(!document.querySelector(".nav-backdrop")){
+        const bd = document.createElement("div");
+        bd.className = "nav-backdrop";
+        bd.addEventListener("click", closeNav);
+        document.body.appendChild(bd);
       }
+      // Close-X-Button hinzufügen
+      const navLinks = document.querySelector(".nav-links");
+      if(navLinks && !navLinks.querySelector(".nav-close-btn")){
+        const closeBtn = document.createElement("button");
+        closeBtn.type = "button";
+        closeBtn.className = "nav-close-btn";
+        closeBtn.setAttribute("aria-label","Menü schließen");
+        closeBtn.style.cssText = "position:absolute;top:calc(20px + env(safe-area-inset-top, 0px));right:18px;width:48px;height:48px;background:var(--panel);border:1px solid var(--line);border-radius:99px;cursor:pointer;z-index:5;display:grid;place-items:center;padding:0;";
+        closeBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>';
+        closeBtn.addEventListener("click", (e) => { e.stopPropagation(); closeNav(); });
+        navLinks.appendChild(closeBtn);
+      }
+    }
+    function closeNav(){
+      document.body.classList.remove("nav-open");
+      toggle.setAttribute("aria-expanded","false");
+      document.querySelectorAll(".nav-backdrop").forEach(b => b.remove());
+    }
+    toggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if(document.body.classList.contains("nav-open")) closeNav();
+      else openNav();
+    });
+    // Klick auf Link: schließt nur das Menü, default Navigation läuft normal
+    document.querySelectorAll(".nav-links a").forEach(a => {
+      a.addEventListener("click", () => {
+        // Kein preventDefault — Navigation soll passieren
+        closeNav();
+      });
     });
   }
   updateCartCount();
