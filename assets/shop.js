@@ -520,79 +520,10 @@ function initChrome(){
     window.addEventListener("scroll", onScroll, { passive:true });
     onScroll();
   }
-  // Mobiles Menü — bulletproof Variante mit separater Backdrop-Div
-  const toggle = document.querySelector(".nav-toggle");
-  if (toggle){
-    function openNav(){
-      document.body.classList.add("nav-open");
-      toggle.setAttribute("aria-expanded", "true");
-      // Backdrop einmal hinzufügen
-      if(!document.querySelector(".nav-backdrop")){
-        const bd = document.createElement("div");
-        bd.className = "nav-backdrop";
-        bd.addEventListener("click", closeNav);
-        document.body.appendChild(bd);
-      }
-      // Close-X-Button hinzufügen
-      const navLinks = document.querySelector(".nav-links");
-      if(navLinks && !navLinks.querySelector(".nav-close-btn")){
-        const closeBtn = document.createElement("button");
-        closeBtn.type = "button";
-        closeBtn.className = "nav-close-btn";
-        closeBtn.setAttribute("aria-label","Menü schließen");
-        closeBtn.style.cssText = "position:absolute;top:calc(20px + env(safe-area-inset-top, 0px));right:18px;width:48px;height:48px;background:var(--panel);border:1px solid var(--line);border-radius:99px;cursor:pointer;z-index:5;display:grid;place-items:center;padding:0;";
-        closeBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>';
-        closeBtn.addEventListener("click", (e) => { e.stopPropagation(); closeNav(); });
-        navLinks.appendChild(closeBtn);
-      }
-    }
-    function closeNav(){
-      document.body.classList.remove("nav-open");
-      toggle.setAttribute("aria-expanded","false");
-      document.querySelectorAll(".nav-backdrop").forEach(b => b.remove());
-    }
-    toggle.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if(document.body.classList.contains("nav-open")) closeNav();
-      else openNav();
-    });
-    // Click + Touch-Handler für maximale Kompatibilität
-    function navigateNow(href, ev){
-      console.log("[Nav] Navigate to:", href);
-      if(ev) ev.preventDefault();
-      if(href && href !== "#" && !href.startsWith("javascript:")){
-        // Mehrere Strategien für die Navigation
-        try { window.location.href = href; } catch(e1){
-          try { window.location.assign(href); } catch(e2){
-            try { document.location = href; } catch(e3){ console.error("All nav strategies failed"); }
-          }
-        }
-      } else {
-        closeNav();
-      }
-    }
-    document.querySelectorAll(".nav-links a").forEach(a => {
-      const href = a.getAttribute("href");
-      // 1. click event (Standard)
-      a.addEventListener("click", (e) => { navigateNow(href, e); });
-      // 2. pointerdown (sofortige Reaktion auf Touch, kein 300ms-Delay)
-      a.addEventListener("pointerdown", (e) => {
-        // Nur für Touch/Mouse-Click, nicht für Scroll
-        if(e.pointerType === "touch" || e.pointerType === "mouse"){
-          // Markiere für späteren Click
-          a.dataset.touchTime = Date.now();
-        }
-      });
-      // 3. Fallback: touchend (für ältere iOS)
-      a.addEventListener("touchend", (e) => {
-        const start = parseInt(a.dataset.touchTime || "0", 10);
-        if(start && (Date.now() - start) < 500){
-          // War ein echter Tap (nicht Scroll)
-          navigateNow(href, e);
-        }
-      });
-    });
-  }
+  // Burger-Toggle komplett entfernt — nav-links sind permanent sichtbar
+  document.querySelectorAll(".nav-toggle").forEach(t => t.remove());
+  document.body.classList.remove("nav-open");
+  document.querySelectorAll(".nav-backdrop, .nav-close-btn").forEach(el => el.remove());
   updateCartCount();
   // Footer-Newsletter: nach Anmeldung Popup nicht mehr triggern + Supabase-Submit
   document.querySelectorAll(".news-form, .footer .news-form, .news form").forEach(form => {
