@@ -2771,17 +2771,53 @@ body.sticky-buy-active .social-proof{
 
 /* PDP (Produktseite) */
 @media (max-width:760px){
-  .pdp { padding: 14px 0 90px !important; } /* unten Platz für Sticky-Bar */
+  .pdp { padding: 14px 0 90px !important; }
   .pdp-grid { gap: 18px !important; }
   .pdp-info h1 { font-size: clamp(1.7rem, 7vw, 2.2rem) !important; line-height: 1.1; }
   .pdp-info .pdp-price { font-size: 1.3rem !important; margin: 8px 0; }
   .pdp-info .eyebrow { font-size: .7rem; }
   .pdp-info .desc { font-size: .92rem; line-height: 1.55; }
+
+  /* Size-Row Header (Label + Quiz + Vergleich) — auf zwei Zeilen brechen */
+  .field-row-with-quiz {
+    flex-wrap: wrap !important;
+    gap: 8px 12px !important;
+    align-items: center !important;
+  }
+  .field-row-with-quiz .field-label { flex: 0 0 auto; }
+  .size-quiz-trigger, .compare-trigger {
+    font-size: .8rem !important;
+    padding: 4px 0 !important;
+    margin-left: 0 !important;
+  }
+
+  /* Größen-Buttons */
   .size-row { gap: 6px; flex-wrap: wrap; }
-  .size-row .size-btn { min-width: 44px; padding: 8px 12px; }
-  .buy-row { gap: 8px; }
-  .qty { flex: 0 0 110px; }
-  .qty button { width: 36px; height: 36px; }
+  .size-row .size-btn { min-width: 48px; padding: 10px 14px; font-size: .9rem; border-radius: 10px; }
+
+  /* Buy-Row: kompakter, Button nicht zu groß */
+  .buy-row {
+    gap: 8px !important;
+    margin-top: 14px !important;
+    align-items: stretch !important;
+  }
+  .qty {
+    flex: 0 0 auto !important;
+    height: 48px !important;
+    border-radius: 10px !important;
+    padding: 0 4px !important;
+  }
+  .qty button { width: 34px !important; height: 34px !important; font-size: 1.1rem !important; }
+  .qty span { min-width: 28px !important; font-size: 1rem; }
+  .buy-row .btn {
+    border-radius: 10px !important;
+    padding: 13px 18px !important;
+    font-size: .95rem !important;
+    height: 48px !important;
+    line-height: 1 !important;
+  }
+
+  /* Gallery */
   .pdp-gallery .pdp-main { aspect-ratio: 1; }
   .pdp-thumbs { gap: 6px; }
   .pdp-thumbs img { width: 60px; height: 60px; }
