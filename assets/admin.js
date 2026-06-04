@@ -797,19 +797,22 @@
     const sb = $(".admin-sidebar"); if(!sb) return;
     sb.classList.add("open");
     document.body.classList.add("sidebar-open");
-    // Backdrop
+    // Backdrop — nur einfacher Click-Handler, kein preventDefault (das blockiert sonst Sidebar-Touches auf manchen Browsern)
     const bd = document.createElement("div");
     bd.className = "sidebar-backdrop";
-    bd.addEventListener("click", closeSidebar);
-    bd.addEventListener("touchstart", e => { e.preventDefault(); closeSidebar(); }, { passive: false });
+    bd.addEventListener("click", (e) => {
+      // Nur schließen wenn der Click WIRKLICH auf dem Backdrop war (nicht ein bubbled Click vom Sidebar)
+      if(e.target === bd) closeSidebar();
+    });
     document.body.appendChild(bd);
     // Close-X-Button in Sidebar (nur einmal hinzufügen)
     if(!sb.querySelector(".sidebar-close")){
       const x = document.createElement("button");
       x.className = "sidebar-close";
+      x.type = "button";
       x.setAttribute("aria-label", "Menü schließen");
       x.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg>';
-      x.addEventListener("click", closeSidebar);
+      x.addEventListener("click", (e) => { e.stopPropagation(); closeSidebar(); });
       sb.appendChild(x);
     }
   }

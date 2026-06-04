@@ -573,9 +573,14 @@
 }
 .sidebar-close:active { background: rgba(255,255,255,.2); }
 .sidebar-close svg { width: 18px; height: 18px; }
-/* Body-Scroll-Lock wenn Sidebar offen */
-body.admin-body.sidebar-open { overflow: hidden; touch-action: none; }
-body.admin-body.sidebar-open .admin-main { overflow: hidden; pointer-events: none; }
+/* Body-Scroll-Lock wenn Sidebar offen — KEIN touch-action none (das würde Sidebar lähmen) */
+body.admin-body.sidebar-open { overflow: hidden; }
+/* Sidebar muss IMMER klickbar bleiben */
+body.admin-body.sidebar-open .admin-sidebar,
+body.admin-body.sidebar-open .admin-sidebar * {
+  pointer-events: auto !important;
+  touch-action: manipulation;
+}
 
 /* MESSAGE THREAD */
 .msg-list { display: grid; gap: 0; }
