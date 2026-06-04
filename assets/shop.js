@@ -556,11 +556,21 @@ function initChrome(){
       if(document.body.classList.contains("nav-open")) closeNav();
       else openNav();
     });
-    // Klick auf Link: schließt nur das Menü, default Navigation läuft normal
+    // Klick auf Link: schließt Menü UND navigiert manuell als Fallback
     document.querySelectorAll(".nav-links a").forEach(a => {
-      a.addEventListener("click", () => {
-        // Kein preventDefault — Navigation soll passieren
+      a.addEventListener("click", (e) => {
+        const href = a.getAttribute("href");
+        console.log("[Nav] Link clicked, href:", href);
+        // Erst Menü schließen
         closeNav();
+        // Dann sicherstellen dass Navigation passiert (Browser-Default kann auf manchen iOS-Versionen scheitern)
+        if(href && !href.startsWith("javascript:")){
+          e.preventDefault();
+          setTimeout(() => {
+            console.log("[Nav] Navigating to:", href);
+            window.location.href = href;
+          }, 80);
+        }
       });
     });
   }
