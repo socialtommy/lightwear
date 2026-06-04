@@ -11,6 +11,14 @@
   const isAdmin = location.pathname.endsWith("/admin.html") || location.pathname.endsWith("admin.html");
   if(isAdmin) return;
 
+  // Debug-Console laden wenn ?debug=1 in URL
+  if(location.search.includes("debug=1")){
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/eruda";
+    s.onload = function(){ try { window.eruda && window.eruda.init(); console.log("[DEBUG] Eruda Console geladen — auf das grüne Icon unten rechts tippen!"); } catch(e){} };
+    document.head.appendChild(s);
+  }
+
   // ============ I18N — DE/EN Übersetzung ============
   const LANG_KEY = "lw_lang_v1";
   const currentLang = (() => { try { return localStorage.getItem(LANG_KEY) || "de"; } catch(e){ return "de"; } })();
