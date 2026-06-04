@@ -538,22 +538,32 @@ function initChrome(){
   // Footer-Newsletter: nach Anmeldung Popup nicht mehr triggern + Supabase-Submit
   document.querySelectorAll(".news-form, .footer .news-form, .news form").forEach(form => {
     form.addEventListener("submit", async (e) => {
+      e.preventDefault();
       const emailInput = form.querySelector("input[type='email']");
       const email = emailInput?.value?.trim() || "";
+      if(!email.includes("@")) return;
       try { localStorage.setItem("lw_newsletter_subscribed_v1", "1"); } catch(e){}
       markNewsletterSeen();
+      const btn = form.querySelector("button[type='submit']");
+      const oldText = btn?.textContent || "";
+      if(btn){ btn.disabled = true; btn.textContent = "Moment …"; }
       if(typeof window.lwSubscribeNewsletter === "function" && email){
         try {
           const r = await window.lwSubscribeNewsletter(email, "footer");
-          // Visuelles Feedback geben
-          const btn = form.querySelector("button[type='submit']");
           if(btn){
-            const oldText = btn.textContent;
-            btn.textContent = r?.alreadySubscribed ? "Bereits angemeldet" : "✓ Angemeldet";
-            setTimeout(() => { btn.textContent = oldText; }, 3000);
+            btn.textContent = r?.alreadySubscribed ? "✓ Bereits angemeldet" : "✓ Angemeldet";
+            btn.disabled = false;
+            setTimeout(() => { btn.textContent = oldText; }, 4000);
           }
           if(emailInput) emailInput.value = "";
-        } catch(err){ console.warn("Newsletter-Anmeldung Fehler:", err); }
+        } catch(err){
+          console.warn("Newsletter-Anmeldung Fehler:", err);
+          if(btn){
+            btn.textContent = "Fehler — nochmal";
+            btn.disabled = false;
+            setTimeout(() => { btn.textContent = oldText; }, 4000);
+          }
+        }
       }
     });
   });

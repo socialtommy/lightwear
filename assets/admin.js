@@ -51,6 +51,7 @@
 
   // ============ DEMO-DATEN ============
   function ensureAbandonedDemo(){
+    if(localStorage.getItem("lw_admin_no_demo") === "1") return;
     if(load(K.abandoned, []).length === 0 && !sessionStorage.getItem("lw_admin_ab_demo")){
       const products = (window.PRODUCTS || []).slice(0, 6);
       const now = Date.now();
@@ -64,6 +65,7 @@
     }
   }
   function ensureCampaignsDemo(){
+    if(localStorage.getItem("lw_admin_no_demo") === "1") return;
     if(load(K.campaigns, []).length === 0 && !sessionStorage.getItem("lw_admin_camp_demo")){
       save(K.campaigns, [
         {id: uid(), name: "Sommer-Drop 2026", channel: "Instagram", budget: 800, spent: 624, impressions: 124000, clicks: 3240, conversions: 87, revenue: 4180, couponCode: "SUMMER25", startDate: "2026-05-15", endDate: "2026-06-15", status: "active"},
@@ -75,6 +77,7 @@
     }
   }
   function ensureSaleCalendarDemo(){
+    if(localStorage.getItem("lw_admin_no_demo") === "1") return;
     if(load(K.saleCalendar, []).length === 0 && !sessionStorage.getItem("lw_admin_sc_demo")){
       const today = new Date();
       const day = (offset) => { const d = new Date(today); d.setDate(d.getDate() + offset); return d.toISOString().slice(0,10); };
@@ -129,6 +132,7 @@
   const LIVE_NAMES = ["Daniel","Sina","Max","Lena","Tobi","Mara","Niklas","Sophie","Jakob","Hannah","Paul","Mia","Felix","Emma","Anna","Jonas"];
   const LIVE_CITIES = ["Berlin","München","Hamburg","Köln","Frankfurt","Stuttgart","Leipzig","Düsseldorf","Bremen","Dresden","Hannover","Nürnberg"];
   function ensureLiveActivity(){
+    if(localStorage.getItem("lw_admin_no_demo") === "1") return;
     if(getLiveFeed().length === 0){
       // 8 initiale Events generieren
       const types = ["view","add","purchase","signup","reminder","review"];
@@ -175,6 +179,7 @@
   }
 
   function ensureDemoMessages(){
+    if(localStorage.getItem("lw_admin_no_demo") === "1") return;
     const m = getMessages();
     if(m.length === 0 && !sessionStorage.getItem("lw_admin_msg_demo")){
       saveMessages([
@@ -475,6 +480,10 @@
 
   // ============ DEMO ORDERS (für leeren State) ============
   function ensureDemoData(){
+    // Wenn der User Demo-Daten dauerhaft ausgeschaltet hat — skip
+    if(localStorage.getItem("lw_admin_no_demo") === "1") return;
+    // Wenn Supabase echte Bestellungen hat — keine Fakes
+    if(_supabaseOrdersCache && _supabaseOrdersCache.length > 0) return;
     const accOrders = load(K.accountOrders, []);
     const admOrders = load(K.adminOrders, []);
     if(accOrders.length === 0 && admOrders.length === 0 && !sessionStorage.getItem("lw_admin_demo_loaded")){
@@ -1168,8 +1177,9 @@
         root.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => openProductForm(b.dataset.edit, render)));
         root.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => {
           if(await confirmModal("Produkt wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.")){
-            deleteProduct(b.dataset.del);
-            toast("Produkt gelöscht", "success");
+            await deleteProduct(b.dataset.del);
+            logActivity("products", "Produkt gelöscht: " + b.dataset.del);
+            toast("Produkt gelöscht (auch aus Supabase)", "success");
             render();
           }
         }));
@@ -1871,6 +1881,8 @@
         list = getNewsletter();
       }
       if(!isFromSupabase) list = getNewsletter();
+      // Beim Sortieren handle beide Felder (subscribed_at vs date)
+      list = list.slice().sort((a,b) => new Date(b.subscribed_at||b.date||0) - new Date(a.subscribed_at||a.date||0));
 
       root.innerHTML = `
         <div class="adm-toolbar">
@@ -2244,17 +2256,27 @@
       const supaCard = document.createElement("div");
       supaCard.className = "adm-card";
       supaCard.style.marginTop = "20px";
+      const isProductionMode = localStorage.getItem("lw_admin_no_demo") === "1";
       supaCard.innerHTML = `
-        <div class="adm-card-h"><h3>🔥 Supabase Migration</h3><span class="pill pill-green">Phase D</span></div>
+        <div class="adm-card-h"><h3>🔥 Supabase &amp; Demo-Modus</h3><span class="pill ${isProductionMode ? 'pill-green' : 'pill-orange'}">${isProductionMode ? 'Produktion' : 'Demo + Echt'}</span></div>
         <div class="adm-card-b">
-          <p style="margin:0 0 14px;color:var(--adm-ink-soft);font-size:.9rem">Migriere alle Produkte einmalig in die echte Supabase-Datenbank. Danach werden Edits dort gespeichert und der Shop lädt von dort.</p>
+          <p style="margin:0 0 14px;color:var(--adm-ink-soft);font-size:.9rem">Verwalte die Verbindung zur Datenbank und Demo-Daten.</p>
           <div class="adm-btn-row">
             <button class="adm-btn primary" id="sb-seed-products">
-              📦 Alle Produkte zu Supabase pushen
+              📦 Produkte zu Supabase pushen
             </button>
             <button class="adm-btn" id="sb-check">
               🔍 Verbindung testen
             </button>
+            ${isProductionMode ? `
+              <button class="adm-btn" id="sb-demo-on">
+                🧪 Demo-Modus wieder einschalten
+              </button>
+            ` : `
+              <button class="adm-btn danger" id="sb-clean-demo">
+                🧹 Demo-Daten aufräumen
+              </button>
+            `}
           </div>
           <div id="sb-status" style="margin-top:12px;font-size:.85rem"></div>
         </div>
@@ -2298,6 +2320,36 @@
           statusEl.innerHTML = '<span style="color:var(--adm-danger)">✗ Fehler: ' + escapeHtml(err.message || String(err)) + '</span>';
         }
       });
+
+      const cleanBtn = $("#sb-clean-demo");
+      if(cleanBtn) cleanBtn.addEventListener("click", async () => {
+        if(!await confirmModal("Alle Demo-Daten (Demo-Bestellungen, Demo-Nachrichten, Live-Activity-Feed, Demo-Carts, Demo-Kampagnen, Demo-Kalender) löschen?\n\nEchte Supabase-Daten bleiben erhalten.")) return;
+        // Demo-Modus permanent aus
+        localStorage.setItem("lw_admin_no_demo", "1");
+        // Lokale Demo-Daten leeren
+        localStorage.removeItem(K.adminOrders);
+        localStorage.removeItem(K.messages);
+        localStorage.removeItem(LIVE_FEED_KEY);
+        localStorage.removeItem(K.abandoned);
+        localStorage.removeItem(K.campaigns);
+        localStorage.removeItem(K.saleCalendar);
+        // Session-Flags löschen
+        sessionStorage.removeItem("lw_admin_demo_loaded");
+        sessionStorage.removeItem("lw_admin_msg_demo");
+        sessionStorage.removeItem("lw_admin_ab_demo");
+        sessionStorage.removeItem("lw_admin_camp_demo");
+        sessionStorage.removeItem("lw_admin_sc_demo");
+        logActivity("system", "Demo-Modus aus, Demo-Daten entfernt");
+        toast("✓ Demo-Daten gelöscht, Produktion an", "success");
+        setTimeout(() => location.reload(), 800);
+      });
+
+      const demoOnBtn = $("#sb-demo-on");
+      if(demoOnBtn) demoOnBtn.addEventListener("click", () => {
+        localStorage.removeItem("lw_admin_no_demo");
+        toast("Demo-Modus aktiviert — Neuladen…", "success");
+        setTimeout(() => location.reload(), 600);
+      });
     },
 
     // -------- MESSAGES (Supabase + lokal) --------
@@ -2331,7 +2383,11 @@
 
       const render = () => {
         const localMsgs = getMessages();
-        const all = [...supabaseMsgs, ...localMsgs].sort((a,b) => new Date(b.date||0) - new Date(a.date||0));
+        // Wenn Supabase echte Nachrichten hat oder Demo-Modus aus → nur Supabase zeigen
+        const noDemo = localStorage.getItem("lw_admin_no_demo") === "1";
+        const showLocal = !noDemo && (!isFromSupabase || supabaseMsgs.length === 0);
+        const all = (isFromSupabase ? [...supabaseMsgs, ...(showLocal ? localMsgs : [])] : localMsgs)
+          .sort((a,b) => new Date(b.date||0) - new Date(a.date||0));
         const list = all.filter(m => {
           if(filter === "unread") return !m.read;
           if(filter === "replied") return m.replied;
