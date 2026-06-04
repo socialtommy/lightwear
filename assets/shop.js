@@ -539,15 +539,17 @@ function initChrome(){
         closeBtn.type = "button";
         closeBtn.className = "nav-close-btn";
         closeBtn.setAttribute("aria-label","Menü schließen");
-        closeBtn.style.cssText = "position:absolute;top:calc(20px + env(safe-area-inset-top, 0px));right:18px;width:48px;height:48px;background:var(--panel);border:1px solid var(--line);border-radius:99px;cursor:pointer;z-index:5;display:grid;place-items:center;padding:0;";
-        closeBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>';
-        navLinks.appendChild(closeBtn);
+        // FIXED position relativ zur Viewport (statt absolute) — verhindert Overlap-Probleme
+        closeBtn.style.cssText = "position:fixed;top:calc(20px + env(safe-area-inset-top, 0px));right:18px;width:44px;height:44px;background:#fff;border:1px solid rgba(28,27,24,.15);border-radius:99px;cursor:pointer;z-index:10000;display:flex;align-items:center;justify-content:center;padding:0;box-sizing:border-box;";
+        closeBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>';
+        document.body.appendChild(closeBtn);  // ← AN BODY anhängen, NICHT an nav-links!
       }
     }
     function closeNav(){
       document.body.classList.remove("nav-open");
       toggle.setAttribute("aria-expanded","false");
       document.querySelectorAll(".nav-backdrop").forEach(b => b.remove());
+      document.querySelectorAll(".nav-close-btn").forEach(b => b.remove());
     }
 
     toggle.addEventListener("click", (e) => {
@@ -556,29 +558,20 @@ function initChrome(){
       else openNav();
     });
 
-    // Debug: zeige bei jedem nav-link Click was passiert
+    // Link-Klicks → manuelle Navigation (Cently-Extension blockt window.location.href? wir versuchen mehrere Wege)
     navLinks.addEventListener("click", (e) => {
-      const closeBtn = e.target.closest(".nav-close-btn");
       const link = e.target.closest("a");
-      console.log("[NAV CLICK]", {
-        target: e.target.tagName,
-        closeBtn: !!closeBtn,
-        link: link ? link.href : null,
-        defaultPrevented: e.defaultPrevented
-      });
-      if(closeBtn){
+      if(!link) return;
+      const href = link.getAttribute("href");
+      if(href && href !== "#" && !href.startsWith("javascript:")){
         e.preventDefault();
-        e.stopPropagation();
-        closeNav();
-        return;
-      }
-      // Für Links: explizit manuell navigieren (Failsafe)
-      if(link){
-        const href = link.getAttribute("href");
-        console.log("[NAV] Going to:", href);
-        if(href && href !== "#" && !href.startsWith("javascript:")){
-          e.preventDefault();
-          window.location.href = href;
+        try { window.location.href = href; }
+        catch(err) {
+          try { window.location.assign(href); }
+          catch(err2) {
+            try { document.location = href; }
+            catch(err3) { console.error("Navigation blocked", err3); }
+          }
         }
       }
     });
