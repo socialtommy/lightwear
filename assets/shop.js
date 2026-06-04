@@ -558,7 +558,7 @@ function initChrome(){
       else openNav();
     });
 
-    // Link-Klicks → manuelle Navigation (Cently-Extension blockt window.location.href? wir versuchen mehrere Wege)
+    // Link-Klicks → manuelle Navigation mit mehreren Fallback-Strategien
     navLinks.addEventListener("click", (e) => {
       const link = e.target.closest("a");
       if(!link) return;
@@ -575,6 +575,22 @@ function initChrome(){
         }
       }
     });
+
+    // CAPTURE-Phase auf Document — fängt Clicks bevor andere Extensions sie abgreifen
+    document.addEventListener("click", (e) => {
+      const link = e.target.closest(".nav-links a");
+      if(!link) return;
+      const href = link.getAttribute("href");
+      console.log("[CAPTURE NAV CLICK]", href, "target:", e.target.tagName);
+      if(href && href !== "#" && !href.startsWith("javascript:")){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        // Erzwinge Navigation via Location-Object
+        const loc = window.location;
+        try { loc.href = href; }
+        catch(err) { setTimeout(() => { loc.href = href; }, 0); }
+      }
+    }, true);  // ← TRUE = Capture-Phase!
   }
   updateCartCount();
   // Footer-Newsletter: nach Anmeldung Popup nicht mehr triggern + Supabase-Submit
