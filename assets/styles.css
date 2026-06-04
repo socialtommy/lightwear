@@ -2436,63 +2436,56 @@ body.sticky-buy-active .social-proof{
   .summary{ position:static; }
 }
 @media (max-width:760px){
-  /* Burger weg */
-  .nav-toggle{ display:none !important; }
-
-  /* Nav-Links: horizontale Scroll-Leiste unter dem Header */
+  .nav-toggle{ display:inline-flex; order:3; }
   .nav-links{
-    position:static !important;
-    display:flex !important;
-    flex-direction:row !important;
-    align-items:center !important;
-    justify-content:flex-start !important;
+    position:fixed !important;
+    top:0 !important; right:0 !important; bottom:0 !important; left:auto !important;
+    width:min(82vw,310px) !important;
+    background-color:#FBFAF6 !important;
+    backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    isolation:isolate;
+    flex-direction:column !important;
+    align-items:flex-start !important; justify-content:flex-start !important;
+    padding: calc(78px + env(safe-area-inset-top, 0px)) 24px calc(20px + env(safe-area-inset-bottom, 0px)) !important;
     gap:0 !important;
-    width:100% !important;
-    order:99 !important;  /* Nach allen anderen Header-Elementen */
-    flex-basis:100% !important;
-    overflow-x:auto !important;
-    overflow-y:hidden !important;
-    -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
-    background:transparent !important;
-    border:none !important;
-    border-top:1px solid var(--line) !important;
-    padding:8px 16px !important;
-    margin-top:8px !important;
-    transform:none !important;
-    box-shadow:none !important;
-    font-size:.92rem !important;
-    z-index:auto !important;
-    isolation:auto !important;
+    transform:translateX(100%);
+    transition:transform .35s cubic-bezier(.22,.61,.36,1);
+    z-index:9999 !important;
+    font-size:1.1rem;
+    border-left:1px solid #e6e1d4 !important;
+    box-shadow:-20px 0 50px rgba(0,0,0,.15) !important;
   }
-  .nav-links::-webkit-scrollbar { display:none; }
   .nav-links a {
-    padding:8px 14px !important;
-    width:auto !important;
-    border:none !important;
-    border-bottom:none !important;
-    flex:0 0 auto !important;
-    color:var(--ink) !important;
+    padding:18px 0 !important;
+    width:100% !important;
+    border-bottom:1px solid rgba(28,27,24,.1) !important;
+    font-weight:500;
+    color:#1C1B18 !important;
     background:transparent !important;
     text-decoration:none !important;
-    display:inline-block !important;
-    white-space:nowrap !important;
-    font-weight:500 !important;
-    border-radius:99px !important;
+    display:block !important;
   }
-  .nav-links a.active {
-    background:var(--ink) !important;
-    color:var(--bg) !important;
-  }
-  /* Nav-Wrap selbst muss flex-wrap erlauben damit Nav-Links unten landet */
-  .site-header .nav {
-    flex-wrap:wrap !important;
-  }
-  /* nav-links Underline (Hover-Effekt) deaktivieren weil sie hier nicht passt */
+  .nav-links a:last-child { border-bottom:none !important; }
   .nav-links a::after { display:none !important; }
-  /* Reset jeglicher Body-State von früher */
-  body.nav-open { overflow:auto !important; }
-  .nav-backdrop, .nav-close-btn { display:none !important; }
+  body.nav-open { overflow:hidden; }
+  body.nav-open .nav-links {
+    transform:translateX(0) !important;
+    pointer-events: auto !important;
+  }
+  body.nav-open .nav-links * {
+    pointer-events: auto !important;
+  }
+  .nav-backdrop{
+    position:fixed !important;
+    inset:0 !important;
+    background-color:rgba(0,0,0,.5) !important;
+    backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+    z-index:9998 !important;
+    cursor:pointer;
+    animation: navFade .25s ease;
+  }
+  @keyframes navFade { from{opacity:0} to{opacity:1} }
+  .nav-close-btn:active { background:#1C1B18 !important; color:#FBFAF6 !important; }
 }
 @media (max-width:520px){
   .look-grid{ grid-template-columns:1fr; }

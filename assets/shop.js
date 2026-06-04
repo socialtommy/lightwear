@@ -520,10 +520,56 @@ function initChrome(){
     window.addEventListener("scroll", onScroll, { passive:true });
     onScroll();
   }
-  // Burger-Toggle komplett entfernt — nav-links sind permanent sichtbar
-  document.querySelectorAll(".nav-toggle").forEach(t => t.remove());
-  document.body.classList.remove("nav-open");
-  document.querySelectorAll(".nav-backdrop, .nav-close-btn").forEach(el => el.remove());
+  // Mobiles Menü mit Slide-In-Sidebar + Backdrop
+  const toggle = document.querySelector(".nav-toggle");
+  if (toggle){
+    function openNav(){
+      document.body.classList.add("nav-open");
+      toggle.setAttribute("aria-expanded", "true");
+      // Backdrop einmalig hinzufügen
+      if(!document.querySelector(".nav-backdrop")){
+        const bd = document.createElement("div");
+        bd.className = "nav-backdrop";
+        bd.addEventListener("click", closeNav);
+        document.body.appendChild(bd);
+      }
+      // Close-X-Button hinzufügen (nur 1×)
+      const navLinks = document.querySelector(".nav-links");
+      if(navLinks && !navLinks.querySelector(".nav-close-btn")){
+        const closeBtn = document.createElement("button");
+        closeBtn.type = "button";
+        closeBtn.className = "nav-close-btn";
+        closeBtn.setAttribute("aria-label","Menü schließen");
+        closeBtn.style.cssText = "position:absolute;top:calc(20px + env(safe-area-inset-top, 0px));right:18px;width:48px;height:48px;background:var(--panel);border:1px solid var(--line);border-radius:99px;cursor:pointer;z-index:5;display:grid;place-items:center;padding:0;";
+        closeBtn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>';
+        closeBtn.addEventListener("click", (e) => { e.stopPropagation(); closeNav(); });
+        navLinks.appendChild(closeBtn);
+      }
+    }
+    function closeNav(){
+      document.body.classList.remove("nav-open");
+      toggle.setAttribute("aria-expanded","false");
+      document.querySelectorAll(".nav-backdrop").forEach(b => b.remove());
+    }
+    toggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if(document.body.classList.contains("nav-open")) closeNav();
+      else openNav();
+    });
+    // Robuste Navigation auf Mobile (manche Browser blockieren default click)
+    function navigateTo(href, ev){
+      if(ev) ev.preventDefault();
+      if(href && href !== "#" && !href.startsWith("javascript:")){
+        window.location.href = href;
+      } else {
+        closeNav();
+      }
+    }
+    document.querySelectorAll(".nav-links a").forEach(a => {
+      const href = a.getAttribute("href");
+      a.addEventListener("click", (e) => navigateTo(href, e));
+    });
+  }
   updateCartCount();
   // Footer-Newsletter: nach Anmeldung Popup nicht mehr triggern + Supabase-Submit
   document.querySelectorAll(".news-form, .footer .news-form, .news form").forEach(form => {
