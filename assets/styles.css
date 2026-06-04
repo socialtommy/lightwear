@@ -3048,6 +3048,52 @@ body.sticky-buy-active .social-proof{
 }
 
 /* =================================================================
+   GRÖSSENTABELLE & andere Tabellen auf Mobile fixen
+   ================================================================= */
+@media (max-width:760px){
+  /* Mobiles Wrap: nicht zu viel Padding (sonst weniger Platz für Inhalt) */
+  .wrap { padding-inline: 16px !important; }
+
+  /* Size-Tabelle: kompakter, horizontal scrollbar als Fallback */
+  .size-table {
+    font-size: .82rem;
+    margin: 18px -4px !important;
+    width: calc(100% + 8px);
+    border-radius: 10px !important;
+  }
+  .size-table th, .size-table td {
+    padding: 9px 6px !important;
+  }
+  .size-table th {
+    font-size: .58rem !important;
+    letter-spacing: .04em !important;
+    text-transform: uppercase;
+    line-height: 1.15;
+  }
+  .size-table td:first-child {
+    font-size: .85rem !important;
+    padding: 9px 8px !important;
+  }
+  .size-table td { font-variant-numeric: tabular-nums; }
+
+  /* Lange Header umbrechen lassen */
+  .size-table th { word-break: break-word; hyphens: auto; }
+
+  /* Prose-Container nicht zusätzlich einklammern */
+  .prose { padding: 0 !important; max-width: 100% !important; }
+  .prose h2 { font-size: 1.25rem !important; margin: 24px 0 8px !important; line-height: 1.2; }
+  .prose p { font-size: .92rem; line-height: 1.55; margin: 0 0 14px; }
+  .prose ul, .prose ol { padding-left: 22px; }
+  .prose blockquote { margin: 16px 0; padding: 12px 16px; font-size: .95rem; }
+}
+
+/* Bei extra schmalen Bildschirmen: Tabelle horizontal scrollen */
+@media (max-width:380px){
+  .size-table { font-size: .76rem; }
+  .size-table th { font-size: .54rem !important; }
+}
+
+/* =================================================================
    Z-INDEX HIERARCHIE & OVERLAP-PREVENTION (Mobile)
    ================================================================= */
 /* Klare Z-Index-Reihenfolge */
