@@ -556,15 +556,31 @@ function initChrome(){
       else openNav();
     });
 
-    // NUR Close-Button verarbeiten — Links nutzen native Browser-Navigation
+    // Debug: zeige bei jedem nav-link Click was passiert
     navLinks.addEventListener("click", (e) => {
       const closeBtn = e.target.closest(".nav-close-btn");
+      const link = e.target.closest("a");
+      console.log("[NAV CLICK]", {
+        target: e.target.tagName,
+        closeBtn: !!closeBtn,
+        link: link ? link.href : null,
+        defaultPrevented: e.defaultPrevented
+      });
       if(closeBtn){
         e.preventDefault();
         e.stopPropagation();
         closeNav();
+        return;
       }
-      // Für Links: NICHT preventDefault, NICHT abfangen — Browser navigiert nativ
+      // Für Links: explizit manuell navigieren (Failsafe)
+      if(link){
+        const href = link.getAttribute("href");
+        console.log("[NAV] Going to:", href);
+        if(href && href !== "#" && !href.startsWith("javascript:")){
+          e.preventDefault();
+          window.location.href = href;
+        }
+      }
     });
   }
   updateCartCount();
