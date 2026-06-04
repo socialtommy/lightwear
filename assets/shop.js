@@ -556,17 +556,39 @@ function initChrome(){
       if(document.body.classList.contains("nav-open")) closeNav();
       else openNav();
     });
-    // Klick auf Link: navigiert SOFORT manuell (kein setTimeout = kein Browser-Throttle)
+    // Click + Touch-Handler für maximale Kompatibilität
+    function navigateNow(href, ev){
+      console.log("[Nav] Navigate to:", href);
+      if(ev) ev.preventDefault();
+      if(href && href !== "#" && !href.startsWith("javascript:")){
+        // Mehrere Strategien für die Navigation
+        try { window.location.href = href; } catch(e1){
+          try { window.location.assign(href); } catch(e2){
+            try { document.location = href; } catch(e3){ console.error("All nav strategies failed"); }
+          }
+        }
+      } else {
+        closeNav();
+      }
+    }
     document.querySelectorAll(".nav-links a").forEach(a => {
-      a.addEventListener("click", (e) => {
-        const href = a.getAttribute("href");
-        console.log("[Nav] Link clicked, href:", href);
-        if(href && href !== "#" && !href.startsWith("javascript:")){
-          e.preventDefault();
-          // Direkt navigieren — closeNav läuft nicht, weil die Seite eh neu lädt
-          window.location.href = href;
-        } else {
-          closeNav();
+      const href = a.getAttribute("href");
+      // 1. click event (Standard)
+      a.addEventListener("click", (e) => { navigateNow(href, e); });
+      // 2. pointerdown (sofortige Reaktion auf Touch, kein 300ms-Delay)
+      a.addEventListener("pointerdown", (e) => {
+        // Nur für Touch/Mouse-Click, nicht für Scroll
+        if(e.pointerType === "touch" || e.pointerType === "mouse"){
+          // Markiere für späteren Click
+          a.dataset.touchTime = Date.now();
+        }
+      });
+      // 3. Fallback: touchend (für ältere iOS)
+      a.addEventListener("touchend", (e) => {
+        const start = parseInt(a.dataset.touchTime || "0", 10);
+        if(start && (Date.now() - start) < 500){
+          // War ein echter Tap (nicht Scroll)
+          navigateNow(href, e);
         }
       });
     });
