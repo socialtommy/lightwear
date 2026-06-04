@@ -1760,28 +1760,42 @@
       `;
     },
 
-    // -------- NEWSLETTER --------
-    newsletter(root){
-      setHeader("Newsletter", "Abonnenten verwalten");
-      const list = getNewsletter();
+    // -------- NEWSLETTER (Supabase) --------
+    async newsletter(root){
+      setHeader("Newsletter", "Echte Abonnent:innen aus Supabase");
+      root.innerHTML = `<div class="adm-card"><div class="adm-card-b"><div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="animation:spin 1.5s linear infinite"><path d="M3 12a9 9 0 1 1 9 9"/></svg><h3>Lade aus Supabase…</h3></div></div></div>`;
+
+      let list = [];
+      let isFromSupabase = false;
+      try {
+        if(typeof window.lwGetNewsletterSubscribers === "function"){
+          list = await window.lwGetNewsletterSubscribers();
+          isFromSupabase = true;
+        }
+      } catch(err){
+        console.error("Supabase Fehler — Fallback auf localStorage:", err);
+        list = getNewsletter();
+      }
+      if(!isFromSupabase) list = getNewsletter();
 
       root.innerHTML = `
         <div class="adm-toolbar">
-          <h3 style="margin:0;flex:1">${list.length} Abonnent:innen</h3>
-          <button class="adm-btn" id="nl-add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Manuell hinzufügen</button>
-          <button class="adm-btn" id="nl-export"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exportieren</button>
+          <h3 style="margin:0;flex:1">${list.length} Abonnent:innen ${isFromSupabase ? '<span class="pill pill-green" style="margin-left:8px">🟢 Live aus Supabase</span>' : '<span class="pill pill-orange" style="margin-left:8px">⚠️ localStorage Fallback</span>'}</h3>
+          <button class="adm-btn" id="nl-refresh">↻ Aktualisieren</button>
+          <button class="adm-btn" id="nl-export"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>CSV-Export</button>
         </div>
         <div class="adm-card">
-          ${list.length === 0 ? `<div class="empty"><h3>Noch keine Abonnent:innen</h3></div>` : `
+          ${list.length === 0 ? `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><h3>Noch keine Abonnent:innen</h3><p>Sobald sich jemand auf der Website einträgt, erscheint sie/er hier.</p></div>` : `
             <div class="adm-table-wrap">
               <table class="adm-table">
-                <thead><tr><th>E-Mail</th><th>Angemeldet</th><th></th></tr></thead>
+                <thead><tr><th>E-Mail</th><th>Quelle</th><th>Angemeldet</th><th></th></tr></thead>
                 <tbody>
-                  ${list.map((s,i) => `
+                  ${list.map((s) => `
                     <tr>
-                      <td>${escapeHtml(s.email)}</td>
-                      <td>${fmtDateTime(s.date)}</td>
-                      <td><button class="adm-btn sm danger" data-del-nl="${i}">Entfernen</button></td>
+                      <td><strong>${escapeHtml(s.email)}</strong></td>
+                      <td>${escapeHtml(s.source || '—')}</td>
+                      <td>${fmtDateTime(s.subscribed_at || s.date)}</td>
+                      <td><button class="adm-btn sm danger" data-del-nl="${escapeHtml(String(s.id))}">Entfernen</button></td>
                     </tr>
                   `).join("")}
                 </tbody>
@@ -1790,29 +1804,27 @@
           `}
         </div>
       `;
-      $("#nl-add").addEventListener("click", () => {
-        const m = modal({
-          title: "Abonnent hinzufügen",
-          body: `<div class="adm-form"><div class="adm-field"><label>E-Mail-Adresse</label><input type="email" id="nl-email" placeholder="name@email.de"></div></div>`,
-          footer: `<button class="adm-btn" data-cancel>Abbrechen</button><button class="adm-btn primary" data-ok>Hinzufügen</button>`
-        });
-        m.el.querySelector("[data-cancel]").addEventListener("click", m.close);
-        m.el.querySelector("[data-ok]").addEventListener("click", () => {
-          const em = m.el.querySelector("#nl-email").value.trim();
-          if(!em.includes("@")) { toast("Bitte gültige E-Mail eingeben", "error"); return; }
-          if(addNewsletter(em)) toast("Hinzugefügt", "success");
-          else toast("Bereits angemeldet", "error");
-          m.close();
-          VIEWS.newsletter(root);
-        });
-      });
+
+      $("#nl-refresh").addEventListener("click", () => VIEWS.newsletter(root));
       $("#nl-export").addEventListener("click", () => exportCSV("newsletter.csv", list));
-      root.querySelectorAll("[data-del-nl]").forEach(b => b.addEventListener("click", () => {
-        const l = getNewsletter();
-        l.splice(parseInt(b.dataset.delNl,10), 1);
-        save(K.newsletter, l);
-        toast("Entfernt", "success");
-        VIEWS.newsletter(root);
+      root.querySelectorAll("[data-del-nl]").forEach(b => b.addEventListener("click", async () => {
+        const id = b.dataset.delNl;
+        if(!await confirmModal("Diese E-Mail wirklich aus der Datenbank löschen?")) return;
+        try {
+          if(typeof window.lwDeleteNewsletterSubscriber === "function" && isFromSupabase){
+            await window.lwDeleteNewsletterSubscriber(parseInt(id, 10));
+            logActivity("newsletter", "Abo gelöscht (Supabase)");
+          } else {
+            const l = getNewsletter();
+            l.splice(parseInt(id, 10), 1);
+            save(K.newsletter, l);
+          }
+          toast("Entfernt", "success");
+          VIEWS.newsletter(root);
+        } catch(err){
+          console.error(err);
+          toast("Fehler beim Löschen", "error");
+        }
       }));
     },
 
@@ -2135,13 +2147,38 @@
       });
     },
 
-    // -------- MESSAGES --------
-    messages(root){
-      setHeader("Nachrichten", "Kundenanfragen vom Kontaktformular");
+    // -------- MESSAGES (Supabase + lokal) --------
+    async messages(root){
+      setHeader("Nachrichten", "Echte Kundenanfragen vom Kontaktformular");
       let filter = "all";
 
+      // Echte Nachrichten aus Supabase + lokale Demo-Messages mergen
+      let supabaseMsgs = [];
+      let isFromSupabase = false;
+      try {
+        if(typeof window.lwGetContactMessages === "function"){
+          const data = await window.lwGetContactMessages();
+          supabaseMsgs = (data || []).map(m => ({
+            id: "sb-" + m.id,
+            supabaseId: m.id,
+            name: m.name,
+            email: m.email,
+            topic: m.topic,
+            message: m.message,
+            date: m.created_at,
+            read: m.read,
+            replied: m.replied,
+            fromSupabase: true
+          }));
+          isFromSupabase = true;
+        }
+      } catch(err){
+        console.warn("Supabase-Messages Fehler:", err);
+      }
+
       const render = () => {
-        const all = getMessages();
+        const localMsgs = getMessages();
+        const all = [...supabaseMsgs, ...localMsgs].sort((a,b) => new Date(b.date||0) - new Date(a.date||0));
         const list = all.filter(m => {
           if(filter === "unread") return !m.read;
           if(filter === "replied") return m.replied;
@@ -2150,6 +2187,7 @@
         });
 
         root.innerHTML = `
+          ${isFromSupabase ? '<div style="margin-bottom:14px"><span class="pill pill-green">🟢 Live aus Supabase verbunden</span> <small style="color:var(--adm-ink-soft)">— ' + supabaseMsgs.length + ' echte Nachrichten + ' + getMessages().length + ' Demo</small></div>' : '<div style="margin-bottom:14px"><span class="pill pill-orange">⚠️ Nur lokale Daten</span></div>'}
           <div class="stat-grid">
             <div class="stat"><div class="stat-ico blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11a8 8 0 0 1-3.5 6.6L18 22l-4-3a8 8 0 1 1 7-8z"/></svg></div><div class="stat-meta"><div class="stat-label">Gesamt</div><div class="stat-value">${all.length}</div></div></div>
             <div class="stat"><div class="stat-ico orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg></div><div class="stat-meta"><div class="stat-label">Ungelesen</div><div class="stat-value">${all.filter(m=>!m.read).length}</div></div></div>

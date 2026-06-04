@@ -535,11 +535,26 @@ function initChrome(){
     );
   }
   updateCartCount();
-  // Footer-Newsletter: nach Anmeldung Popup nicht mehr triggern
+  // Footer-Newsletter: nach Anmeldung Popup nicht mehr triggern + Supabase-Submit
   document.querySelectorAll(".news-form, .footer .news-form, .news form").forEach(form => {
-    form.addEventListener("submit", () => {
+    form.addEventListener("submit", async (e) => {
+      const emailInput = form.querySelector("input[type='email']");
+      const email = emailInput?.value?.trim() || "";
       try { localStorage.setItem("lw_newsletter_subscribed_v1", "1"); } catch(e){}
       markNewsletterSeen();
+      if(typeof window.lwSubscribeNewsletter === "function" && email){
+        try {
+          const r = await window.lwSubscribeNewsletter(email, "footer");
+          // Visuelles Feedback geben
+          const btn = form.querySelector("button[type='submit']");
+          if(btn){
+            const oldText = btn.textContent;
+            btn.textContent = r?.alreadySubscribed ? "Bereits angemeldet" : "✓ Angemeldet";
+            setTimeout(() => { btn.textContent = oldText; }, 3000);
+          }
+          if(emailInput) emailInput.value = "";
+        } catch(err){ console.warn("Newsletter-Anmeldung Fehler:", err); }
+      }
     });
   });
 }
@@ -1263,23 +1278,32 @@ function initCart(){
 function initContact(){
   const form = document.getElementById("contact-form");
   if (!form) return;
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    // Nachricht im Admin sichtbar machen
+    const payload = {
+      name: document.getElementById("cf-name")?.value || "",
+      email: document.getElementById("cf-email")?.value || "",
+      topic: document.getElementById("cf-topic")?.value || "Anfrage",
+      message: document.getElementById("cf-msg")?.value || "",
+      source: "kontakt-seite"
+    };
+    // localStorage als Backup
     try {
       const msgs = JSON.parse(localStorage.getItem("lw_messages_v1") || "[]");
       msgs.unshift({
         id: "MSG-" + Date.now(),
-        name: document.getElementById("cf-name")?.value || "",
-        email: document.getElementById("cf-email")?.value || "",
-        topic: document.getElementById("cf-topic")?.value || "Anfrage",
-        message: document.getElementById("cf-msg")?.value || "",
+        ...payload,
         date: new Date().toISOString(),
         read: false,
         replied: false
       });
       localStorage.setItem("lw_messages_v1", JSON.stringify(msgs.slice(0, 200)));
     } catch(e){}
+    // An Supabase senden
+    if(typeof window.lwSendContactMessage === "function"){
+      try { await window.lwSendContactMessage(payload); }
+      catch(err){ console.warn("Kontakt-Sendung Fehler:", err); }
+    }
     const success = document.getElementById("contact-success");
     if (success) success.classList.add("show");
     form.querySelectorAll("input, textarea").forEach(el => { if (el.id !== "cf-name") el.value = ""; });
@@ -1800,9 +1824,16 @@ function showNewsletterPopup(){
   const close = () => { bd.classList.remove("open"); document.body.style.overflow = ""; markNewsletterSeen(); setTimeout(() => bd.remove(), 350); };
   bd.querySelector(".close").addEventListener("click", close);
   bd.addEventListener("click", (e) => { if (e.target === bd) close(); });
-  bd.querySelector("#nl-form").addEventListener("submit", (e) => {
+  bd.querySelector("#nl-form").addEventListener("submit", async (e) => {
     e.preventDefault();
+    const emailInput = bd.querySelector("input[type='email']");
+    const email = emailInput?.value?.trim() || "";
     try { localStorage.setItem("lw_newsletter_subscribed_v1", "1"); } catch(err){}
+    // Echte Anmeldung an Supabase
+    if(typeof window.lwSubscribeNewsletter === "function" && email){
+      try { await window.lwSubscribeNewsletter(email, "popup"); }
+      catch(err){ console.warn("Newsletter-Anmeldung Fehler:", err); }
+    }
     const content = bd.querySelector("#nl-content");
     content.innerHTML = `<div class="nl-success">
       <h2>Danke! 🎉</h2>
