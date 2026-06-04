@@ -668,3 +668,88 @@
   .ah-burger { display: grid; }
   .adm-2col { grid-template-columns: 1fr; }
 }
+
+/* Mobile-Polish für Admin-Panel */
+@media (max-width:760px){
+  .admin-header { padding: 12px 14px; gap: 10px; flex-wrap: wrap; }
+  .admin-header h1 { font-size: 1.2rem; }
+  .admin-header p { font-size: .75rem; }
+  .ah-search { display: none; }
+  .ah-user { padding-left: 6px; }
+  .ah-avatar { width: 32px; height: 32px; }
+
+  .admin-content { padding: 16px 12px 40px; }
+
+  /* Stat-Grid: 2 Spalten auf Mobile */
+  .stat-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat { padding: 12px 14px; gap: 10px; }
+  .stat-ico { width: 36px; height: 36px; }
+  .stat-value { font-size: 1.3rem; }
+  .stat-label { font-size: .68rem; }
+  .stat-trend { font-size: .68rem; }
+
+  /* Cards */
+  .adm-card-h { padding: 12px 14px; flex-wrap: wrap; gap: 8px; }
+  .adm-card-h h3 { font-size: .92rem; }
+  .adm-card-b { padding: 14px; }
+
+  /* Tabellen: horizontal scrollen */
+  .adm-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .adm-table { min-width: 600px; font-size: .8rem; }
+  .adm-table th, .adm-table td { padding: 10px 12px; }
+  .adm-table .thumb { width: 36px; height: 36px; }
+
+  /* Toolbar */
+  .adm-toolbar { gap: 8px; flex-wrap: wrap; }
+  .adm-toolbar input[type="text"], .adm-toolbar select {
+    flex: 1; min-width: 140px; font-size: 16px;
+  }
+  .adm-toolbar .grow { width: 100%; }
+
+  /* Buttons kleiner aber Touch-OK */
+  .adm-btn { padding: 9px 12px; font-size: .8rem; min-height: 38px; }
+  .adm-btn.sm { padding: 6px 10px; font-size: .74rem; min-height: 32px; }
+  .adm-btn svg { width: 12px; height: 12px; }
+
+  /* Modal */
+  .adm-modal {
+    max-width: calc(100vw - 20px) !important;
+    margin: 10px;
+    max-height: 90vh;
+  }
+  .adm-modal.wide { max-width: calc(100vw - 20px) !important; }
+  .adm-modal-h { padding: 14px 16px; }
+  .adm-modal-b { padding: 16px; }
+  .adm-modal-f { padding: 12px 16px; flex-wrap: wrap; }
+  .adm-modal-f .adm-btn { flex: 1; min-width: 80px; }
+
+  /* Form-Field */
+  .adm-form { gap: 12px; }
+  .adm-field input, .adm-field select, .adm-field textarea {
+    font-size: 16px !important; padding: 10px 12px;
+  }
+  .adm-field-row { grid-template-columns: 1fr !important; gap: 10px; }
+
+  /* Live-Chat Mobile: einspaltig */
+  #lc-thread-card, [id^="lc-"] { font-size: .85rem; }
+
+  /* Color-Picker (Design) */
+  .adm-color-picker { grid-template-columns: 1fr !important; }
+
+  /* KPI-Bar */
+  .kpi-row { grid-template-columns: 100px 1fr auto; gap: 8px; font-size: .76rem; }
+  .kpi-row .kpi-name { font-size: .72rem; }
+
+  /* Live-Feed im Dashboard */
+  #live-feed-container { max-height: 280px; }
+
+  /* Bulk-Aktionen-Bar bei Bestellungen: scrollbar */
+  .bulk-bar { flex-wrap: wrap; padding: 10px 14px; gap: 8px; font-size: .82rem; }
+  .bulk-bar .bulk-actions { gap: 6px; flex-wrap: wrap; }
+  .bulk-bar .adm-btn { font-size: .74rem; padding: 7px 10px; }
+}
+
+/* Extrem schmal: nur 1 Spalte für Stats */
+@media (max-width:420px){
+  .stat-grid { grid-template-columns: 1fr; }
+}
