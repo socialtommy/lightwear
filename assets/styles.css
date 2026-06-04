@@ -2437,11 +2437,28 @@ body.sticky-buy-active .social-proof{
 }
 @media (max-width:760px){
   .nav-toggle{ display:inline-flex; order:3; }
-  .nav-links{ position:fixed; inset:0 0 0 auto; width:min(85vw,320px); background:var(--bg); flex-direction:column; align-items:flex-start; justify-content:flex-start; padding-top:72px; gap:6px; padding-left:28px; padding-right:28px; transform:translateX(100%); transition:transform .35s var(--ease); z-index:120; font-size:1.15rem; border-left:1px solid var(--line); }
-  .nav-links a { padding:14px 0; width:100%; border-bottom:1px solid var(--line); font-weight:500; }
+  .nav-links{
+    position:fixed; top:0; right:0; bottom:0;
+    width:min(82vw,310px);
+    background:var(--bg);
+    flex-direction:column; align-items:flex-start; justify-content:flex-start;
+    padding: calc(78px + env(safe-area-inset-top, 0px)) 24px calc(20px + env(safe-area-inset-bottom, 0px));
+    gap:0;
+    transform:translateX(100%);
+    transition:transform .35s var(--ease);
+    z-index:120;
+    font-size:1.1rem;
+    border-left:1px solid var(--line);
+  }
+  .nav-links a {
+    padding:18px 0;
+    width:100%;
+    border-bottom:1px solid var(--line);
+    font-weight:500;
+    color:var(--ink);
+  }
   .nav-links a:last-child { border-bottom:none; }
   body.nav-open { overflow:hidden; }
-  /* Nav-Links MUSS klickbar bleiben */
   body.nav-open .nav-links,
   body.nav-open .nav-links * {
     pointer-events: auto !important;
@@ -2450,19 +2467,28 @@ body.sticky-buy-active .social-proof{
   body.nav-open .nav-links{ transform:none; box-shadow:-30px 0 60px rgba(28,27,24,.25); }
   body.nav-open::before{
     content:""; position:fixed; inset:0;
-    background:rgba(28,27,24,.45); z-index:110;
-    backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);
+    background:rgba(28,27,24,.55); z-index:110;
+    backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
     cursor:pointer;
   }
-  /* Close-Button für Storefront-Menü */
+  /* GROSSER Close-Button — 48px tappable, klar sichtbar */
   body.nav-open .nav-links::before{
-    content:"✕";
-    position:absolute; top:18px; right:22px;
-    width:36px; height:36px;
-    background:var(--panel); border-radius:99px;
-    display:grid; place-items:center;
-    font-size:1.1rem; color:var(--ink); cursor:pointer;
+    content:"";
+    position:absolute;
+    top: calc(20px + env(safe-area-inset-top, 0px));
+    right:20px;
+    width:48px; height:48px;
+    background-color:var(--panel);
+    border:1px solid var(--line);
+    border-radius:99px;
+    cursor:pointer;
+    pointer-events:auto;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='%231a1a1a' stroke-width='2.5' stroke-linecap='round'><path d='m6 6 12 12M18 6 6 18'/></svg>");
+    background-repeat:no-repeat;
+    background-position:center;
+    transition: background-color .15s;
   }
+  body.nav-open .nav-links::before:active{ background-color:var(--ink); }
 }
 @media (max-width:520px){
   .look-grid{ grid-template-columns:1fr; }
