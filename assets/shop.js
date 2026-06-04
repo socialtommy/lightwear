@@ -556,20 +556,17 @@ function initChrome(){
       if(document.body.classList.contains("nav-open")) closeNav();
       else openNav();
     });
-    // Klick auf Link: schließt Menü UND navigiert manuell als Fallback
+    // Klick auf Link: navigiert SOFORT manuell (kein setTimeout = kein Browser-Throttle)
     document.querySelectorAll(".nav-links a").forEach(a => {
       a.addEventListener("click", (e) => {
         const href = a.getAttribute("href");
         console.log("[Nav] Link clicked, href:", href);
-        // Erst Menü schließen
-        closeNav();
-        // Dann sicherstellen dass Navigation passiert (Browser-Default kann auf manchen iOS-Versionen scheitern)
-        if(href && !href.startsWith("javascript:")){
+        if(href && href !== "#" && !href.startsWith("javascript:")){
           e.preventDefault();
-          setTimeout(() => {
-            console.log("[Nav] Navigating to:", href);
-            window.location.href = href;
-          }, 80);
+          // Direkt navigieren — closeNav läuft nicht, weil die Seite eh neu lädt
+          window.location.href = href;
+        } else {
+          closeNav();
         }
       });
     });
