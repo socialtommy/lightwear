@@ -2365,9 +2365,208 @@ function initBestellung(){
     </div>`;
 }
 
-function initKonto(){
+/* ============================================================
+   KONTO mit Supabase Auth (echtes Login)
+   ============================================================ */
+async function initKontoSupabase(root){
+  let user = null;
+  let mode = "signin"; // "signin" | "signup" | "reset"
+
+  // Erste Prüfung
+  try { user = await window.lwGetCurrentUser(); } catch(e){}
+
+  function render(){
+    if(user){
+      renderAccount();
+    } else {
+      renderAuthForm();
+    }
+  }
+
+  function renderAuthForm(){
+    const subtitleMap = {
+      signin: "Melde dich mit deinem Konto an",
+      signup: "Erstelle dein Lightwear-Konto",
+      reset: "Wir senden dir einen Link zum Zurücksetzen"
+    };
+    root.innerHTML = `
+      <div style="max-width:440px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:18px;padding:36px 32px;box-shadow:0 4px 20px rgba(0,0,0,.04)">
+        <div style="text-align:center;margin-bottom:24px">
+          <h2 style="font-family:'Anton',sans-serif;margin:0 0 6px;font-size:1.8rem;letter-spacing:.02em">${mode === "signup" ? "Konto erstellen" : mode === "reset" ? "Passwort vergessen" : "Anmelden"}</h2>
+          <p style="margin:0;color:var(--ink-soft);font-size:.92rem">${subtitleMap[mode]}</p>
+        </div>
+
+        <div style="display:flex;gap:0;margin-bottom:22px;background:var(--panel);border-radius:99px;padding:4px">
+          <button type="button" id="tab-signin" style="flex:1;padding:8px;border:none;background:${mode==='signin'?'var(--ink)':'transparent'};color:${mode==='signin'?'var(--bg)':'var(--ink)'};border-radius:99px;font-family:inherit;font-weight:600;font-size:.85rem;cursor:pointer;transition:.2s">Anmelden</button>
+          <button type="button" id="tab-signup" style="flex:1;padding:8px;border:none;background:${mode==='signup'?'var(--ink)':'transparent'};color:${mode==='signup'?'var(--bg)':'var(--ink)'};border-radius:99px;font-family:inherit;font-weight:600;font-size:.85rem;cursor:pointer;transition:.2s">Registrieren</button>
+        </div>
+
+        <form id="auth-form">
+          ${mode === "signup" ? `
+            <div style="margin-bottom:14px">
+              <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:6px">Name</label>
+              <input type="text" id="auth-name" required style="width:100%;padding:11px 14px;border:1.5px solid var(--line);border-radius:8px;font-family:inherit;font-size:.95rem">
+            </div>
+          ` : ""}
+          <div style="margin-bottom:14px">
+            <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:6px">E-Mail</label>
+            <input type="email" id="auth-email" required style="width:100%;padding:11px 14px;border:1.5px solid var(--line);border-radius:8px;font-family:inherit;font-size:.95rem">
+          </div>
+          ${mode !== "reset" ? `
+            <div style="margin-bottom:14px">
+              <label style="display:block;font-size:.82rem;font-weight:600;margin-bottom:6px">Passwort</label>
+              <input type="password" id="auth-pass" required minlength="6" style="width:100%;padding:11px 14px;border:1.5px solid var(--line);border-radius:8px;font-family:inherit;font-size:.95rem">
+            </div>
+          ` : ""}
+          <div id="auth-msg" style="margin-bottom:14px;font-size:.85rem"></div>
+          <button type="submit" id="auth-submit" class="btn btn-primary" style="width:100%;padding:13px">
+            ${mode === "signin" ? "Anmelden" : mode === "signup" ? "Konto erstellen" : "Link senden"}
+          </button>
+        </form>
+
+        ${mode === "signin" ? `
+          <p style="text-align:center;margin:18px 0 0;font-size:.85rem;color:var(--ink-soft)">
+            <a href="#" id="forgot-link" style="color:var(--ink);text-decoration:underline">Passwort vergessen?</a>
+          </p>
+        ` : mode === "reset" ? `
+          <p style="text-align:center;margin:18px 0 0;font-size:.85rem;color:var(--ink-soft)">
+            <a href="#" id="back-signin" style="color:var(--ink);text-decoration:underline">← Zurück zum Login</a>
+          </p>
+        ` : ""}
+      </div>
+    `;
+
+    document.getElementById("tab-signin")?.addEventListener("click", () => { mode = "signin"; render(); });
+    document.getElementById("tab-signup")?.addEventListener("click", () => { mode = "signup"; render(); });
+    document.getElementById("forgot-link")?.addEventListener("click", e => { e.preventDefault(); mode = "reset"; render(); });
+    document.getElementById("back-signin")?.addEventListener("click", e => { e.preventDefault(); mode = "signin"; render(); });
+
+    document.getElementById("auth-form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const email = document.getElementById("auth-email").value.trim();
+      const pass = document.getElementById("auth-pass")?.value || "";
+      const name = document.getElementById("auth-name")?.value?.trim() || "";
+      const msgEl = document.getElementById("auth-msg");
+      const submitBtn = document.getElementById("auth-submit");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Moment …";
+      try {
+        if(mode === "signup"){
+          await window.lwSignUp(email, pass, name);
+          msgEl.innerHTML = '<div style="background:#e6f3e9;color:#2f7a3e;padding:10px 14px;border-radius:8px;font-weight:500">✓ Konto erstellt! Check deine Mails für die Bestätigung (oder logge dich direkt ein).</div>';
+          mode = "signin";
+          setTimeout(render, 1800);
+        } else if(mode === "signin"){
+          const result = await window.lwSignIn(email, pass);
+          user = result.user;
+          render();
+        } else if(mode === "reset"){
+          await window.lwResetPassword(email);
+          msgEl.innerHTML = '<div style="background:#e6f3e9;color:#2f7a3e;padding:10px 14px;border-radius:8px;font-weight:500">✓ Reset-Link wurde an ' + email + ' gesendet.</div>';
+        }
+      } catch(err){
+        const errMsg = err.message || String(err);
+        msgEl.innerHTML = '<div style="background:#fce8e6;color:#b3261e;padding:10px 14px;border-radius:8px">⚠ ' + errMsg + '</div>';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = mode === "signin" ? "Anmelden" : mode === "signup" ? "Konto erstellen" : "Link senden";
+      }
+    });
+  }
+
+  async function renderAccount(){
+    // Hole Profil-Daten + Bestellungen
+    let myOrders = [];
+    try {
+      if(typeof window.lwGetOrders === "function"){
+        const all = await window.lwGetOrders();
+        myOrders = (all || []).filter(o => o.customer_email === user.email || o.user_id === user.id);
+      }
+    } catch(e){ console.warn("Orders-Load Fehler:", e); }
+
+    const userName = user.user_metadata?.name || user.email.split("@")[0];
+
+    root.innerHTML = `
+      <div style="display:grid;grid-template-columns:280px 1fr;gap:32px;max-width:1000px;margin:0 auto">
+        <aside style="background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px 22px;height:fit-content">
+          <div style="width:64px;height:64px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-family:'Anton',sans-serif;font-size:1.6rem;margin-bottom:14px">${escapeHtmlS(userName.charAt(0).toUpperCase())}</div>
+          <div style="font-family:'Anton',sans-serif;font-size:1.2rem;letter-spacing:.02em">${escapeHtmlS(userName)}</div>
+          <div style="color:var(--ink-soft);font-size:.82rem;margin-top:2px;word-break:break-all">${escapeHtmlS(user.email)}</div>
+          <div style="margin-top:18px;padding-top:18px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px;font-size:.88rem">
+            <a href="#orders" style="padding:8px 10px;border-radius:6px;color:var(--ink);text-decoration:none">📦 Bestellungen (${myOrders.length})</a>
+            <a href="#profile" style="padding:8px 10px;border-radius:6px;color:var(--ink);text-decoration:none">👤 Profil</a>
+            <a href="#" id="logout-link" style="padding:8px 10px;border-radius:6px;color:var(--ink);text-decoration:none">🚪 Abmelden</a>
+          </div>
+        </aside>
+
+        <main>
+          <h2 style="font-family:'Anton',sans-serif;font-size:2rem;margin:0 0 20px;letter-spacing:.02em">Willkommen zurück, ${escapeHtmlS(userName)} 👋</h2>
+
+          <div style="background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;margin-bottom:20px">
+            <h3 style="margin:0 0 16px;font-family:'Anton',sans-serif;font-size:1.2rem">Deine Bestellungen</h3>
+            ${myOrders.length === 0 ? `
+              <p style="color:var(--ink-soft);font-size:.9rem;margin:0 0 14px">Du hast noch keine Bestellungen.</p>
+              <a href="shop.html" class="btn btn-primary">Zur Kollektion</a>
+            ` : `
+              <div style="display:flex;flex-direction:column;gap:12px">
+                ${myOrders.slice(0, 5).map(o => `
+                  <div style="display:flex;justify-content:space-between;padding:12px 16px;background:var(--panel);border-radius:10px;align-items:center">
+                    <div>
+                      <strong>${escapeHtmlS(o.order_num || o.id)}</strong><br>
+                      <small style="color:var(--ink-soft)">${new Date(o.created_at).toLocaleDateString("de-DE")}</small>
+                    </div>
+                    <div style="text-align:right">
+                      <strong>${money(o.total)}</strong><br>
+                      <small style="color:var(--ink-soft);text-transform:capitalize">${o.status}</small>
+                    </div>
+                  </div>
+                `).join("")}
+              </div>
+            `}
+          </div>
+
+          <div style="background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px">
+            <h3 style="margin:0 0 16px;font-family:'Anton',sans-serif;font-size:1.2rem">Profil</h3>
+            <div style="display:grid;gap:10px;font-size:.9rem">
+              <div><strong style="color:var(--ink-soft);font-size:.78rem;text-transform:uppercase;letter-spacing:.08em">Name:</strong><br>${escapeHtmlS(userName)}</div>
+              <div><strong style="color:var(--ink-soft);font-size:.78rem;text-transform:uppercase;letter-spacing:.08em">E-Mail:</strong><br>${escapeHtmlS(user.email)}</div>
+              <div><strong style="color:var(--ink-soft);font-size:.78rem;text-transform:uppercase;letter-spacing:.08em">Konto seit:</strong><br>${new Date(user.created_at).toLocaleDateString("de-DE")}</div>
+            </div>
+          </div>
+        </main>
+      </div>
+    `;
+
+    document.getElementById("logout-link").addEventListener("click", async e => {
+      e.preventDefault();
+      try { await window.lwSignOut(); } catch(err){}
+      user = null;
+      render();
+    });
+  }
+
+  render();
+
+  // Auth-State-Listener — falls Login von wo anders erfolgt
+  if(typeof window.lwOnAuthStateChange === "function"){
+    window.lwOnAuthStateChange((event, session) => {
+      if(session?.user) user = session.user;
+      else if(event === "SIGNED_OUT") user = null;
+      render();
+    });
+  }
+}
+
+async function initKonto(){
   const root = document.getElementById("account-root");
   if (!root) return;
+
+  // Wenn Supabase Auth verfügbar → echtes Auth-System nutzen
+  if(typeof window.lwGetCurrentUser === "function"){
+    return initKontoSupabase(root);
+  }
+  // Sonst Fallback unten (alter Code)
+
   function renderLogin(){
     root.innerHTML = `
       <div class="auth-box">

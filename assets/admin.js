@@ -273,10 +273,17 @@
     extras.push(prod);
     save(K.productExtras, extras);
   }
-  function deleteProduct(id){
+  async function deleteProduct(id){
+    // Aus Supabase löschen
+    if(typeof window.lwDeleteProduct === "function"){
+      try { await window.lwDeleteProduct(id); } catch(e){ console.error(e); }
+    }
+    // Aus window.PRODUCTS entfernen
+    const idx = (window.PRODUCTS || []).findIndex(x => x.id === id);
+    if(idx >= 0) window.PRODUCTS.splice(idx, 1);
+    // localStorage säubern
     const extras = load(K.productExtras, []).filter(p => p.id !== id);
     save(K.productExtras, extras);
-    // overrides löschen wir nicht, könnten alte Daten sein, aber soft-delete:
     const ov = load(K.productOverrides, {});
     if(ov[id]) { ov[id].deleted = true; save(K.productOverrides, ov); }
   }
@@ -513,10 +520,33 @@
   // ============ APP ============
   let currentView = "dashboard";
 
-  function initApp(){
+  async function initApp(){
     // Dark Mode initial anwenden
     if(localStorage.getItem("lw_admin_dark") === "1"){
       document.body.classList.add("dark-mode");
+    }
+    // Produkte aus Supabase laden (überschreibt window.PRODUCTS)
+    if(typeof window.lwGetProducts === "function"){
+      try {
+        const sbProducts = await window.lwGetProducts();
+        if(sbProducts && sbProducts.length > 0){
+          const mapped = sbProducts.map(r => ({
+            id: r.id, name: r.name, price: Number(r.price)||0,
+            compareAt: r.compare_at != null ? Number(r.compare_at) : undefined,
+            category: r.category, meta: r.meta,
+            desc: r.description, description: r.description,
+            img: r.img, image: r.image, gallery: r.gallery,
+            sizes: r.sizes || ["S","M","L","XL"],
+            stock: r.stock ?? 50, active: r.active !== false,
+            limitedEdition: !!r.limited_edition,
+            editionSize: r.edition_size, editionSold: r.edition_sold,
+            preorder: !!r.preorder, preorderDate: r.preorder_date,
+            preorderDiscount: r.preorder_discount
+          }));
+          window.PRODUCTS = mapped;
+          console.log("✓", mapped.length, "Produkte aus Supabase im Admin geladen");
+        }
+      } catch(e){ console.warn("Supabase-Products-Load Fehler:", e); }
     }
     ensureDemoData();
     ensureDemoMessages();
@@ -3268,7 +3298,7 @@
       preorderFields.style.display = preorderToggle.checked ? "" : "none";
     });
 
-    m.el.querySelector("[data-ok]").addEventListener("click", () => {
+    m.el.querySelector("[data-ok]").addEventListener("click", async () => {
       const patch = {
         name: m.el.querySelector("#pf-name").value.trim(),
         category: m.el.querySelector("#pf-cat").value,
@@ -3288,10 +3318,27 @@
         preorderDiscount: parseInt(m.el.querySelector("#pf-preorderDiscount")?.value, 10) || 0
       };
       if(!patch.name){ toast("Bitte Name eingeben", "error"); return; }
+      const productId = id || p.id;
+      const fullProduct = {...p, ...patch, id: productId};
+      // Schreibe nach Supabase
+      let supabaseSuccess = false;
+      if(typeof window.lwUpsertProduct === "function"){
+        try {
+          await window.lwUpsertProduct(fullProduct);
+          supabaseSuccess = true;
+          // window.PRODUCTS in-place updaten
+          const idx = window.PRODUCTS.findIndex(x => x.id === productId);
+          if(idx >= 0) window.PRODUCTS[idx] = fullProduct;
+          else window.PRODUCTS.push(fullProduct);
+        } catch(err){
+          console.error("Supabase-Update fehlgeschlagen:", err);
+        }
+      }
+      // localStorage als Fallback / Backup
       if(id) setProductOverride(id, patch);
       else addProductExtra({...p, ...patch});
-      logActivity("products", (id ? "Produkt aktualisiert: " : "Neues Produkt: ") + patch.name);
-      toast(id ? "Produkt aktualisiert" : "Produkt erstellt", "success");
+      logActivity("products", (id ? "Produkt aktualisiert: " : "Neues Produkt: ") + patch.name + (supabaseSuccess ? " (Supabase ✓)" : " (lokal)"));
+      toast((id ? "Produkt aktualisiert" : "Produkt erstellt") + (supabaseSuccess ? " — in Supabase" : ""), "success");
       m.close();
       onSave && onSave();
     });
