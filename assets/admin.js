@@ -2605,9 +2605,13 @@
       root.innerHTML = html;
     },
 
-    // -------- LIVE CHAT --------
-    livechat(root){
+    // -------- LIVE CHAT (Supabase Realtime) --------
+    async livechat(root){
       setHeader("Live-Chat", "Echtzeit-Gespräche mit Kunden");
+      // Wenn Supabase verfügbar → Realtime-Implementation
+      if(typeof window.lwGetAllConversations === "function"){
+        return renderLiveChatSupabase(root);
+      }
       const lc = getLiveChatState();
       const convs = (lc.conversations||[]).slice().sort((a,b) => new Date(b.lastActivity||0) - new Date(a.lastActivity||0));
       const activeConvs = convs.filter(c => c.status === "active");
@@ -3041,6 +3045,192 @@
       onChange && onChange();
       updateBadges();
     });
+  }
+
+  // ============ LIVE CHAT SUPABASE (Realtime) ============
+  let liveChatSupabaseUnsub = null;
+  let liveChatSupabaseSelectedId = null;
+
+  async function renderLiveChatSupabase(root){
+    let convs = [];
+    try { convs = await window.lwGetAllConversations(); }
+    catch(err){ console.error("Conversations-Load Fehler:", err); }
+
+    convs = convs.sort((a,b) => new Date(b.last_activity||b.started_at||0) - new Date(a.last_activity||a.started_at||0));
+    const activeConvs = convs.filter(c => c.status === "active");
+    const sel = convs.find(c => c.id === liveChatSupabaseSelectedId) || activeConvs[0] || convs[0];
+    if(sel) liveChatSupabaseSelectedId = sel.id;
+
+    if(convs.length === 0){
+      root.innerHTML = `
+        <div class="adm-card">
+          <div class="adm-card-b">
+            <div class="empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11a8 8 0 0 1-3.5 6.6L18 22l-4-3a8 8 0 1 1 7-8z"/></svg>
+              <h3>Noch keine Live-Chats</h3>
+              <p>Sobald jemand im Shop „Mit Mitarbeiter sprechen" klickt, erscheint die Konversation hier in Echtzeit über alle Geräte!</p>
+              <p style="margin-top:14px;font-size:.82rem;color:var(--adm-ink-soft)">💡 Test: Öffne Shop auf deinem Handy → Chatbot → „Mit Mitarbeiter sprechen"</p>
+            </div>
+          </div>
+        </div>`;
+      // Subscribe für neue Conversations
+      subscribeLiveChatUpdates(root);
+      return;
+    }
+
+    let messages = [];
+    if(sel){
+      try { messages = await window.lwGetConversationMessages(sel.id); }
+      catch(err){ console.error("Messages-Load Fehler:", err); }
+      // Mark as read (admin sieht jetzt)
+      if(sel.unread_by_admin > 0){
+        try { await window.lwUpdateConversation(sel.id, { unread_by_admin: 0 }); }
+        catch(e){}
+        sel.unread_by_admin = 0;
+      }
+    }
+
+    root.innerHTML = `
+      <div style="margin-bottom:14px;display:flex;align-items:center;gap:10px">
+        <span class="pill pill-green">🟢 Realtime via Supabase</span>
+        <small style="color:var(--adm-ink-soft)">Echtzeit-Updates über alle Geräte</small>
+      </div>
+      <div style="display:grid;grid-template-columns:320px 1fr;gap:20px;height:calc(100vh - 200px);min-height:500px">
+        <div class="adm-card" style="display:flex;flex-direction:column;overflow:hidden">
+          <div class="adm-card-h">
+            <h3>Konversationen</h3>
+            <span class="pill pill-green">${activeConvs.length} aktiv</span>
+          </div>
+          <div style="flex:1;overflow-y:auto" id="lc-conv-list">
+            ${convs.map(c => `
+              <div class="msg-item ${c.unread_by_admin > 0 ? 'unread':''}" data-conv="${c.id}" style="${c.id === sel?.id ? 'background:var(--adm-accent-soft);' : ''}cursor:pointer">
+                <div class="msg-avatar" style="background:${c.status==='active'?'#2f7a3e':'#6b6863'};color:#fff">${escapeHtml((c.customer_name||'?').charAt(0).toUpperCase())}</div>
+                <div class="msg-meta">
+                  <div class="top">
+                    <span class="name">${escapeHtml(c.customer_name||'Gast')}</span>
+                    <span class="when">${timeAgo(new Date(c.last_activity||c.started_at||0).getTime())}</span>
+                  </div>
+                  <div class="topic" style="font-size:.74rem;color:var(--adm-ink-soft)">
+                    ${c.status === 'active' ? '<span class="pill pill-green" style="font-size:.62rem">aktiv</span>' : '<span class="pill pill-gray" style="font-size:.62rem">geschlossen</span>'}
+                    ${c.operator ? ' · ' + escapeHtml(c.operator) : ''}
+                  </div>
+                </div>
+                ${c.unread_by_admin > 0 ? `<div style="background:#b3261e;color:#fff;font-size:.7rem;font-weight:700;border-radius:99px;min-width:20px;height:20px;display:grid;place-items:center;padding:0 6px;align-self:center">${c.unread_by_admin}</div>` : '<div></div>'}
+              </div>
+            `).join("")}
+          </div>
+        </div>
+
+        <div class="adm-card" style="display:flex;flex-direction:column;overflow:hidden">
+          ${sel ? renderSupabaseThreadHTML(sel, messages) : '<div class="empty"><h3>Wähle eine Konversation</h3></div>'}
+        </div>
+      </div>
+    `;
+
+    // Auswahl
+    root.querySelectorAll("[data-conv]").forEach(el => el.addEventListener("click", () => {
+      liveChatSupabaseSelectedId = parseInt(el.dataset.conv, 10);
+      renderLiveChatSupabase(root);
+    }));
+
+    // Thread-Aktionen
+    if(sel) wireSupabaseThread(sel, root);
+
+    // Realtime-Updates
+    subscribeLiveChatUpdates(root);
+  }
+
+  function renderSupabaseThreadHTML(conv, messages){
+    const op = conv.operator || "Team";
+    return `
+      <div class="adm-card-h" style="border-bottom:1px solid var(--adm-line);padding-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="msg-avatar" style="background:#2f7a3e;color:#fff;width:36px;height:36px">${escapeHtml((conv.customer_name||'?').charAt(0).toUpperCase())}</div>
+          <div>
+            <strong>${escapeHtml(conv.customer_name||'Gast')}</strong><br>
+            <small style="color:var(--adm-ink-soft)">${escapeHtml(conv.customer_email||'kein E-Mail')} · ${conv.status === 'active' ? '<span style="color:#2f7a3e">● live</span>' : 'geschlossen'}</small>
+          </div>
+        </div>
+        ${conv.status === 'active' ? '<button class="adm-btn danger sm" id="lc-close-sb">Chat schließen</button>' : ''}
+      </div>
+      <div id="lc-thread-sb" style="flex:1;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column;gap:10px">
+        ${(messages||[]).map(m => renderSupabaseMsg(m)).join("")}
+      </div>
+      ${conv.status === 'active' ? `
+        <form id="lc-form-sb" style="border-top:1px solid var(--adm-line);padding:14px;display:flex;gap:8px">
+          <input type="text" id="lc-input-sb" placeholder="Antwort als ${escapeHtml(op)} schreiben…" style="flex:1;padding:10px 14px;border:1px solid var(--adm-line);border-radius:8px;font-family:inherit;font-size:.9rem;background:var(--adm-surface);color:var(--adm-ink)" autocomplete="off">
+          <button type="submit" class="adm-btn primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z"/></svg>
+            Senden
+          </button>
+        </form>
+      ` : '<div style="padding:16px 22px;color:var(--adm-ink-soft);font-size:.85rem;font-style:italic;text-align:center;border-top:1px solid var(--adm-line)">Konversation geschlossen.</div>'}
+    `;
+  }
+
+  function renderSupabaseMsg(m){
+    if(m.from_who === "system"){
+      return `<div style="text-align:center;font-size:.74rem;color:var(--adm-ink-soft);padding:4px 0;font-style:italic">${escapeHtml(m.text)}</div>`;
+    }
+    const isOp = m.from_who === "operator";
+    const align = isOp ? 'flex-end' : 'flex-start';
+    const bg = isOp ? '#1a1a1a' : 'var(--adm-surface-2)';
+    const color = isOp ? '#fff' : 'var(--adm-ink)';
+    const time = new Date(m.created_at).toLocaleTimeString("de-DE", {hour:"2-digit", minute:"2-digit"});
+    return `
+      <div style="display:flex;justify-content:${align}">
+        <div style="max-width:75%;background:${bg};color:${color};padding:10px 14px;border-radius:14px;${isOp?'border-bottom-right-radius:4px':'border-bottom-left-radius:4px'}">
+          <div style="font-size:.9rem;line-height:1.4">${escapeHtml(m.text)}</div>
+          <div style="font-size:.65rem;opacity:.6;margin-top:3px;text-align:${isOp?'right':'left'}">${time}${isOp && m.operator_name ? ' · ' + escapeHtml(m.operator_name) : ''}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function wireSupabaseThread(conv, root){
+    const closeBtn = root.querySelector("#lc-close-sb");
+    if(closeBtn){
+      closeBtn.addEventListener("click", async () => {
+        if(await confirmModal("Konversation wirklich schließen? Der Kunde wird informiert.")){
+          try {
+            await window.lwUpdateConversation(conv.id, { status: "closed" });
+            await window.lwSendChatMessage(conv.id, "system", "Chat vom Team geschlossen.");
+          } catch(e){}
+          logActivity("livechat", "Chat geschlossen", conv.customer_name);
+          toast("Chat geschlossen", "success");
+          renderLiveChatSupabase(root);
+        }
+      });
+    }
+    const form = root.querySelector("#lc-form-sb");
+    const input = root.querySelector("#lc-input-sb");
+    const thread = root.querySelector("#lc-thread-sb");
+    if(thread) thread.scrollTop = thread.scrollHeight;
+    if(input) setTimeout(() => input.focus(), 50);
+    if(form && input){
+      form.addEventListener("submit", async e => {
+        e.preventDefault();
+        const text = input.value.trim();
+        if(!text) return;
+        input.value = "";
+        try {
+          await window.lwSendChatMessage(conv.id, "operator", text, conv.operator || "Lukas");
+          logActivity("livechat", "Antwort an " + (conv.customer_name || "Kunde"), text.slice(0, 50));
+        } catch(err){ console.error(err); toast("Senden fehlgeschlagen", "error"); }
+      });
+    }
+  }
+
+  function subscribeLiveChatUpdates(root){
+    if(liveChatSupabaseUnsub) liveChatSupabaseUnsub();
+    if(typeof window.lwSubscribeAllConversations === "function"){
+      liveChatSupabaseUnsub = window.lwSubscribeAllConversations(() => {
+        // Bei jeder Änderung — re-render
+        if(currentView === "livechat"){
+          renderLiveChatSupabase(root);
+        }
+      });
+    }
   }
 
   // ============ LIVE CHAT RENDER ============

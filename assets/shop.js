@@ -5216,8 +5216,145 @@ const OPERATOR_NAMES = ["Lukas","Sarah","Daniel","Mia","Tobi"];
 let liveChatPollTimer = null;
 let lastRenderedMessageCount = 0;
 
-function triggerOperatorHandover(){
+async function triggerOperatorHandoverSupabase(){
+  const { addMsg, body, chipsHost, formEl, input } = window.__lwChat;
+  // Handover-Button entfernen
+  const handover = document.querySelector(".chat-handover-btn");
+  if(handover) handover.remove();
+
+  // Status-Box
+  const sys = document.createElement("div");
+  sys.style.cssText = "text-align:center;font-size:.75rem;color:var(--ink-soft);padding:10px 0;";
+  sys.innerHTML = `<em>Ich verbinde dich jetzt mit einem Mitarbeiter <span class="chat-typing" style="display:inline-flex;vertical-align:middle;gap:3px;margin-left:6px"><span></span><span></span><span></span></span></em>`;
+  body.appendChild(sys);
+  body.scrollTop = body.scrollHeight;
+
+  // User-Info aus Supabase Auth oder Account
+  let customer = { name: "Gast", email: "" };
+  try {
+    if(typeof window.lwGetCurrentUser === "function"){
+      const u = await window.lwGetCurrentUser();
+      if(u){ customer = { name: u.user_metadata?.name || u.email.split("@")[0], email: u.email }; }
+    }
+  } catch(e){}
+  if(customer.name === "Gast"){
+    try {
+      const acc = JSON.parse(localStorage.getItem("lw_account_v1") || "null");
+      if(acc) customer = { name: acc.name || acc.firstName || "Konto-Kunde", email: acc.email||"" };
+    } catch(e){}
+  }
+
+  // Conversation in Supabase erstellen
+  let conv;
+  try {
+    conv = await window.lwCreateConversation(customer);
+  } catch(err){
+    sys.innerHTML = '⚠ Verbindung fehlgeschlagen — versuch es nochmal.';
+    sys.style.color = "var(--ink-soft)";
+    console.error("Conversation-Create Fehler:", err);
+    return;
+  }
+
+  // Operator zuweisen
+  const operator = OPERATOR_NAMES[Math.floor(Math.random() * OPERATOR_NAMES.length)];
+  try {
+    await window.lwUpdateConversation(conv.id, { operator });
+  } catch(e){}
+
+  // Greeting senden (als Operator)
+  const greet = `Hey ${customer.name === "Gast" ? "" : customer.name}! 👋 Ich bin ${operator} vom Lightwear-Team. Wie kann ich dir helfen?`;
+  try { await window.lwSendChatMessage(conv.id, "operator", greet, operator); } catch(e){}
+
+  // Status-Indikator
+  sys.innerHTML = `✓ Verbunden mit <strong style="color:#2f7a3e">${operator} vom Lightwear-Team</strong>`;
+  sys.style.color = "#2f7a3e";
+
+  // Begrüßung anzeigen
+  addMsg(`<span class="op-name">${operator} · LIGHTWEAR-TEAM</span>${greet}`, "bot operator", true);
+
+  // Header anpassen
+  const head = document.querySelector("#chat-panel .chat-head");
+  if(head){
+    const avatar = head.querySelector(".avatar");
+    if(avatar){ avatar.textContent = operator.charAt(0); avatar.style.background = "#2f7a3e"; }
+    const strong = head.querySelector(".info strong");
+    if(strong) strong.textContent = operator + " · Lightwear-Team";
+    const span = head.querySelector(".info span");
+    if(span){ span.textContent = "online · live"; span.style.color = "#2f7a3e"; }
+  }
+
+  // Chips
+  chipsHost.innerHTML = '<button class="chat-chip" data-end-chat>Chat beenden</button>';
+  chipsHost.querySelector("[data-end-chat]").addEventListener("click", () => endLiveChatSupabase(conv.id));
+
+  // Modus aktivieren
+  window.__lwLiveChatActive = true;
+  window.__lwLiveConvId = conv.id;
+  window.__lwSeenMessageIds = new Set();
+
+  // Form-Handler ersetzen
+  const newForm = formEl.cloneNode(true);
+  formEl.parentNode.replaceChild(newForm, formEl);
+  window.__lwChat.formEl = newForm;
+  const newInput = newForm.querySelector("#chat-input");
+  window.__lwChat.input = newInput;
+  newInput.placeholder = "Nachricht an " + operator + "…";
+
+  newForm.addEventListener("submit", async e => {
+    e.preventDefault();
+    const v = newInput.value.trim();
+    if(!v) return;
+    addMsg(v, "user");
+    newInput.value = "";
+    try {
+      const m = await window.lwSendChatMessage(conv.id, "customer", v);
+      if(m && m.id) window.__lwSeenMessageIds.add(m.id);
+    } catch(err){ console.error("Send-Fehler:", err); }
+  });
+
+  // Realtime Subscribe für Operator-Antworten
+  if(typeof window.lwSubscribeChat === "function"){
+    window.__lwUnsubChat = window.lwSubscribeChat(conv.id, (msg) => {
+      if(window.__lwSeenMessageIds.has(msg.id)) return;
+      window.__lwSeenMessageIds.add(msg.id);
+      if(msg.from_who === "operator"){
+        addMsg(`<span class="op-name">${(msg.operator_name||operator)} · LIGHTWEAR-TEAM</span>${escapeHtmlS(msg.text)}`, "bot operator", true);
+      } else if(msg.from_who === "system"){
+        const sysMsg = document.createElement("div");
+        sysMsg.style.cssText = "text-align:center;font-size:.75rem;color:var(--ink-soft);padding:8px 0;font-style:italic;";
+        sysMsg.textContent = msg.text;
+        body.appendChild(sysMsg);
+        body.scrollTop = body.scrollHeight;
+      }
+    });
+  }
+}
+
+async function endLiveChatSupabase(convId){
+  try {
+    await window.lwUpdateConversation(convId, { status: "closed" });
+    await window.lwSendChatMessage(convId, "system", "Chat vom Kunden beendet.");
+  } catch(e){}
+  window.__lwLiveChatActive = false;
+  if(window.__lwUnsubChat){ window.__lwUnsubChat(); window.__lwUnsubChat = null; }
+  if(window.__lwChat?.chipsHost){
+    window.__lwChat.chipsHost.innerHTML = `
+      <button class="chat-chip" data-q="Wie lange dauert der Versand?">Versand</button>
+      <button class="chat-chip" data-q="Wie ist eure Rückgabe?">Rückgabe</button>
+      <button class="chat-chip" data-q="Welche Größe passt mir?">Größe</button>`;
+  }
+  const sys = document.createElement("div");
+  sys.style.cssText = "text-align:center;font-size:.75rem;color:var(--ink-soft);padding:10px 0;";
+  sys.textContent = "🔒 Chat beendet.";
+  window.__lwChat?.body.appendChild(sys);
+}
+
+async function triggerOperatorHandover(){
   if(!window.__lwChat) return;
+  // Wenn Supabase verfügbar → echter Realtime-Chat
+  if(typeof window.lwCreateConversation === "function"){
+    return triggerOperatorHandoverSupabase();
+  }
   const { addMsg, body, chipsHost, formEl, input } = window.__lwChat;
 
   // Button entfernen
