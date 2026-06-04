@@ -2276,6 +2276,52 @@ function checkoutToOrder(){
   try { localStorage.setItem(ORDER_KEY, JSON.stringify(order)); } catch(e){}
   // Kundenkonto: Bestellung speichern
   saveOrderToAccount(order);
+
+  // Echte Supabase-Bestellung anlegen
+  if(typeof window.lwCreateOrder === "function"){
+    (async () => {
+      try {
+        // Customer-Daten holen (Auth oder Konto)
+        let customer = { name: "Gast", email: "" };
+        try {
+          if(typeof window.lwGetCurrentUser === "function"){
+            const u = await window.lwGetCurrentUser();
+            if(u){ customer = { name: u.user_metadata?.name || u.email.split("@")[0], email: u.email }; }
+          }
+        } catch(e){}
+        if(!customer.email){
+          try {
+            const acc = JSON.parse(localStorage.getItem("lw_account_v1") || "null");
+            if(acc) customer = { name: acc.name || acc.firstName || "Konto-Kunde", email: acc.email||"" };
+          } catch(e){}
+        }
+        // Items mit Produkt-Name/Preis anreichern
+        const items = cart.map(l => {
+          const p = getProduct(l.id) || {};
+          return {
+            id: l.id,
+            name: p.name || l.id,
+            price: p.price || 0,
+            qty: l.qty,
+            size: l.size,
+            category: p.category
+          };
+        });
+        await window.lwCreateOrder({
+          orderNum,
+          customer,
+          items,
+          subtotal,
+          shipping: ship,
+          discount,
+          total,
+          coupon: order.coupon
+        });
+        console.log("✓ Bestellung in Supabase gespeichert:", orderNum);
+      } catch(err){ console.warn("Supabase-Order Fehler:", err); }
+    })();
+  }
+
   // Cart und Coupon leeren
   saveCart([]); setCoupon("");
   location.href = "bestellung.html";

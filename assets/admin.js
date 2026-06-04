@@ -291,6 +291,49 @@
     return getProducts().filter(p => !p.deleted);
   }
 
+  // Supabase-Bestellungen Cache + Loader
+  let _supabaseOrdersCache = null;
+  async function loadOrdersFromSupabase(){
+    if(typeof window.lwGetOrders !== "function") return [];
+    try {
+      const rows = await window.lwGetOrders();
+      const allProducts = getProducts();
+      const findProduct = (pid) => allProducts.find(p => p.id === pid);
+      return (rows||[]).map(r => ({
+        id: r.order_num || ("LW-SB-" + r.id),
+        supabaseId: r.id,
+        orderNum: r.order_num,
+        date: r.created_at,
+        status: r.status,
+        customer: {
+          name: r.customer_name || "Gast",
+          email: r.customer_email || "",
+          address: r.customer_address
+        },
+        items: (r.items || []).map(it => {
+          const p = it.id ? findProduct(it.id) : null;
+          return {
+            id: it.id,
+            name: it.name || p?.name || it.id || "Unbekannt",
+            size: it.size,
+            qty: Number(it.qty) || 1,
+            price: Number(it.price) || Number(p?.price) || 0,
+            category: it.category || p?.category
+          };
+        }),
+        shipping: Number(r.shipping) || 0,
+        discount: Number(r.discount) || 0,
+        subtotal: Number(r.subtotal) || 0,
+        total: Number(r.total) || 0,
+        coupon: r.coupon,
+        notes: r.notes || [],
+        refund: r.refund,
+        cancelled: r.cancelled,
+        fromSupabase: true
+      }));
+    } catch(e){ console.warn("Supabase Orders Load Fehler:", e); return []; }
+  }
+
   function getOrders(){
     // Account-Bestellungen vom Checkout haben items: [{id, size, qty}]
     // — Name und Preis aus PRODUCTS auflösen, dazu Format normalisieren
@@ -336,9 +379,20 @@
       })
     }));
 
-    return [...acc, ...adm].sort((a,b) => new Date(b.date||0) - new Date(a.date||0));
+    const sb = _supabaseOrdersCache || [];
+    // Dedup: Supabase-Order mit gleicher orderNum → lokale rausfiltern
+    const sbOrderNums = new Set(sb.map(o => o.orderNum).filter(Boolean));
+    const accFiltered = acc.filter(o => !sbOrderNums.has(o.orderNum));
+    return [...sb, ...accFiltered, ...adm].sort((a,b) => new Date(b.date||0) - new Date(a.date||0));
   }
   function setOrderStatus(orderId, status){
+    // Supabase zuerst
+    const sbOrder = (_supabaseOrdersCache||[]).find(o => o.id === orderId || o.orderNum === orderId);
+    if(sbOrder && typeof window.lwUpdateOrder === "function"){
+      window.lwUpdateOrder(sbOrder.supabaseId, { status }).catch(e => console.error(e));
+      sbOrder.status = status;
+      return;
+    }
     const acc = load(K.accountOrders, []);
     let found = false;
     const updated = acc.map(o => {
@@ -555,6 +609,16 @@
     ensureCampaignsDemo();
     ensureEmailTemplatesDemo();
     ensureSaleCalendarDemo();
+    // Supabase-Bestellungen vor-laden
+    try { _supabaseOrdersCache = await loadOrdersFromSupabase(); }
+    catch(e){ _supabaseOrdersCache = []; }
+    // Bestellungen alle 8 Sek refresh (für neue Käufer-Bestellungen)
+    setInterval(async () => {
+      try {
+        _supabaseOrdersCache = await loadOrdersFromSupabase();
+        updateBadges();
+      } catch(e){}
+    }, 8000);
     startAdminLiveChatPolling();
 
     // Sidebar nav
@@ -3849,6 +3913,13 @@
   }
 
   function updateOrder(orderId, patch){
+    // Supabase zuerst
+    const sbOrder = (_supabaseOrdersCache||[]).find(o => o.id === orderId || o.orderNum === orderId);
+    if(sbOrder && typeof window.lwUpdateOrder === "function"){
+      window.lwUpdateOrder(sbOrder.supabaseId, patch).catch(e => console.error(e));
+      Object.assign(sbOrder, patch);
+      return;
+    }
     const acc = load(K.accountOrders, []);
     let found = false;
     const updatedAcc = acc.map(o => {
