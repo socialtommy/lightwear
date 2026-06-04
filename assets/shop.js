@@ -2532,63 +2532,149 @@ async function initKontoSupabase(root){
 
     const userName = user.user_metadata?.name || user.email.split("@")[0];
 
-    root.innerHTML = `
-      <div style="display:grid;grid-template-columns:280px 1fr;gap:32px;max-width:1000px;margin:0 auto">
-        <aside style="background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px 22px;height:fit-content">
-          <div style="width:64px;height:64px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-family:'Anton',sans-serif;font-size:1.6rem;margin-bottom:14px">${escapeHtmlS(userName.charAt(0).toUpperCase())}</div>
-          <div style="font-family:'Anton',sans-serif;font-size:1.2rem;letter-spacing:.02em">${escapeHtmlS(userName)}</div>
-          <div style="color:var(--ink-soft);font-size:.82rem;margin-top:2px;word-break:break-all">${escapeHtmlS(user.email)}</div>
-          <div style="margin-top:18px;padding-top:18px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px;font-size:.88rem">
-            <a href="#orders" style="padding:8px 10px;border-radius:6px;color:var(--ink);text-decoration:none">📦 Bestellungen (${myOrders.length})</a>
-            <a href="#profile" style="padding:8px 10px;border-radius:6px;color:var(--ink);text-decoration:none">👤 Profil</a>
-            <a href="#" id="logout-link" style="padding:8px 10px;border-radius:6px;color:var(--ink);text-decoration:none">🚪 Abmelden</a>
-          </div>
-        </aside>
+    let activeTab = "overview"; // "overview" | "orders" | "profile"
 
-        <main>
-          <h2 style="font-family:'Anton',sans-serif;font-size:2rem;margin:0 0 20px;letter-spacing:.02em">Willkommen zurück, ${escapeHtmlS(userName)} 👋</h2>
+    function renderInner(){
+      root.innerHTML = `
+        <div style="display:grid;grid-template-columns:280px 1fr;gap:32px;max-width:1000px;margin:0 auto">
+          <aside style="background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px 22px;height:fit-content;position:sticky;top:90px">
+            <div style="width:64px;height:64px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-family:'Anton',sans-serif;font-size:1.6rem;margin-bottom:14px">${escapeHtmlS(userName.charAt(0).toUpperCase())}</div>
+            <div style="font-family:'Anton',sans-serif;font-size:1.2rem;letter-spacing:.02em">${escapeHtmlS(userName)}</div>
+            <div style="color:var(--ink-soft);font-size:.82rem;margin-top:2px;word-break:break-all">${escapeHtmlS(user.email)}</div>
+            <div style="margin-top:18px;padding-top:18px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:4px;font-size:.9rem">
+              <button type="button" data-tab="overview" style="padding:10px 12px;border-radius:8px;color:var(--ink);background:${activeTab==='overview'?'var(--panel)':'transparent'};border:none;font-family:inherit;font-size:.9rem;cursor:pointer;text-align:left;font-weight:${activeTab==='overview'?600:500}">🏠 Übersicht</button>
+              <button type="button" data-tab="orders" style="padding:10px 12px;border-radius:8px;color:var(--ink);background:${activeTab==='orders'?'var(--panel)':'transparent'};border:none;font-family:inherit;font-size:.9rem;cursor:pointer;text-align:left;font-weight:${activeTab==='orders'?600:500}">📦 Bestellungen <span style="background:var(--ink);color:var(--bg);padding:1px 8px;border-radius:99px;font-size:.7rem;margin-left:4px">${myOrders.length}</span></button>
+              <button type="button" data-tab="profile" style="padding:10px 12px;border-radius:8px;color:var(--ink);background:${activeTab==='profile'?'var(--panel)':'transparent'};border:none;font-family:inherit;font-size:.9rem;cursor:pointer;text-align:left;font-weight:${activeTab==='profile'?600:500}">👤 Profil</button>
+              <button type="button" id="logout-link" style="padding:10px 12px;border-radius:8px;color:var(--ink);background:transparent;border:none;font-family:inherit;font-size:.9rem;cursor:pointer;text-align:left;margin-top:8px;border-top:1px solid var(--line);padding-top:14px">🚪 Abmelden</button>
+            </div>
+          </aside>
 
-          <div style="background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;margin-bottom:20px">
-            <h3 style="margin:0 0 16px;font-family:'Anton',sans-serif;font-size:1.2rem">Deine Bestellungen</h3>
+          <main id="account-main">${renderTabContent()}</main>
+        </div>
+      `;
+
+      // Tabs
+      root.querySelectorAll("[data-tab]").forEach(b => b.addEventListener("click", () => {
+        activeTab = b.dataset.tab;
+        renderInner();
+      }));
+      document.getElementById("logout-link").addEventListener("click", async () => {
+        try { await window.lwSignOut(); } catch(err){}
+        user = null;
+        render();
+      });
+    }
+
+    function renderTabContent(){
+      if(activeTab === "orders"){
+        return `
+          <h2 style="font-family:'Anton',sans-serif;font-size:2rem;margin:0 0 20px;letter-spacing:.02em">Meine Bestellungen</h2>
+          <div style="background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px">
             ${myOrders.length === 0 ? `
-              <p style="color:var(--ink-soft);font-size:.9rem;margin:0 0 14px">Du hast noch keine Bestellungen.</p>
-              <a href="shop.html" class="btn btn-primary">Zur Kollektion</a>
+              <div style="text-align:center;padding:40px 20px">
+                <p style="color:var(--ink-soft);font-size:.95rem;margin:0 0 16px">Du hast noch keine Bestellungen.</p>
+                <a href="shop.html" class="btn btn-primary">Jetzt shoppen</a>
+              </div>
             ` : `
-              <div style="display:flex;flex-direction:column;gap:12px">
-                ${myOrders.slice(0, 5).map(o => `
-                  <div style="display:flex;justify-content:space-between;padding:12px 16px;background:var(--panel);border-radius:10px;align-items:center">
-                    <div>
-                      <strong>${escapeHtmlS(o.order_num || o.id)}</strong><br>
-                      <small style="color:var(--ink-soft)">${new Date(o.created_at).toLocaleDateString("de-DE")}</small>
+              <div style="display:flex;flex-direction:column;gap:14px">
+                ${myOrders.map(o => `
+                  <div style="border:1px solid var(--line);border-radius:12px;padding:18px;background:#fff">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:14px">
+                      <div>
+                        <div style="font-family:'Anton',sans-serif;font-size:1.05rem;letter-spacing:.04em">${escapeHtmlS(o.order_num || o.id)}</div>
+                        <div style="color:var(--ink-soft);font-size:.82rem;margin-top:2px">Bestellt am ${new Date(o.created_at).toLocaleDateString("de-DE", {day:"numeric", month:"long", year:"numeric"})}</div>
+                      </div>
+                      <div style="text-align:right">
+                        <strong style="font-size:1.1rem">${money(o.total)}</strong>
+                        <div style="display:inline-block;background:${o.status==='delivered'?'#e6f3e9':o.status==='shipped'?'#e6efff':o.status==='cancelled'?'#fce8e6':o.status==='refunded'?'#f1efe9':'#fbf3e1'};color:${o.status==='delivered'?'#2f7a3e':o.status==='shipped'?'#1e5fb8':o.status==='cancelled'?'#b3261e':o.status==='refunded'?'#6b6863':'#b87b00'};padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:600;text-transform:uppercase;margin-top:4px">${o.status||'pending'}</div>
+                      </div>
                     </div>
-                    <div style="text-align:right">
-                      <strong>${money(o.total)}</strong><br>
-                      <small style="color:var(--ink-soft);text-transform:capitalize">${o.status}</small>
+                    <div style="border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:6px;font-size:.85rem">
+                      ${(o.items||[]).map(it => `
+                        <div style="display:flex;justify-content:space-between">
+                          <span>${escapeHtmlS(it.name || it.id || 'Artikel')} ${it.size ? '· Gr. ' + escapeHtmlS(it.size) : ''} · ${it.qty || 1}×</span>
+                          <strong>${money((it.price||0) * (it.qty||1))}</strong>
+                        </div>
+                      `).join("")}
                     </div>
                   </div>
                 `).join("")}
               </div>
             `}
           </div>
+        `;
+      }
 
+      if(activeTab === "profile"){
+        return `
+          <h2 style="font-family:'Anton',sans-serif;font-size:2rem;margin:0 0 20px;letter-spacing:.02em">Mein Profil</h2>
           <div style="background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px">
-            <h3 style="margin:0 0 16px;font-family:'Anton',sans-serif;font-size:1.2rem">Profil</h3>
-            <div style="display:grid;gap:10px;font-size:.9rem">
-              <div><strong style="color:var(--ink-soft);font-size:.78rem;text-transform:uppercase;letter-spacing:.08em">Name:</strong><br>${escapeHtmlS(userName)}</div>
-              <div><strong style="color:var(--ink-soft);font-size:.78rem;text-transform:uppercase;letter-spacing:.08em">E-Mail:</strong><br>${escapeHtmlS(user.email)}</div>
-              <div><strong style="color:var(--ink-soft);font-size:.78rem;text-transform:uppercase;letter-spacing:.08em">Konto seit:</strong><br>${new Date(user.created_at).toLocaleDateString("de-DE")}</div>
+            <div style="display:grid;gap:18px;font-size:.95rem">
+              <div>
+                <div style="color:var(--ink-soft);font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:4px">Name</div>
+                <strong style="font-size:1.05rem">${escapeHtmlS(userName)}</strong>
+              </div>
+              <div>
+                <div style="color:var(--ink-soft);font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:4px">E-Mail</div>
+                <strong style="font-size:1.05rem">${escapeHtmlS(user.email)}</strong>
+              </div>
+              <div>
+                <div style="color:var(--ink-soft);font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:4px">Mitglied seit</div>
+                <strong style="font-size:1.05rem">${new Date(user.created_at).toLocaleDateString("de-DE", {day:"numeric", month:"long", year:"numeric"})}</strong>
+              </div>
+              <div>
+                <div style="color:var(--ink-soft);font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:4px">User-ID</div>
+                <code style="font-size:.78rem;background:var(--panel);padding:4px 8px;border-radius:4px">${escapeHtmlS(user.id)}</code>
+              </div>
             </div>
           </div>
-        </main>
-      </div>
-    `;
+        `;
+      }
 
-    document.getElementById("logout-link").addEventListener("click", async e => {
-      e.preventDefault();
-      try { await window.lwSignOut(); } catch(err){}
-      user = null;
-      render();
-    });
+      // Overview (Default)
+      return `
+        <h2 style="font-family:'Anton',sans-serif;font-size:2rem;margin:0 0 20px;letter-spacing:.02em">Willkommen zurück, ${escapeHtmlS(userName)} 👋</h2>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px">
+          <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px">
+            <div style="color:var(--ink-soft);font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600">Bestellungen</div>
+            <div style="font-family:'Anton',sans-serif;font-size:2.2rem;line-height:1;margin-top:6px">${myOrders.length}</div>
+          </div>
+          <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px">
+            <div style="color:var(--ink-soft);font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600">Light Points</div>
+            <div style="font-family:'Anton',sans-serif;font-size:2.2rem;line-height:1;margin-top:6px">${(() => { try { return localStorage.getItem("lw_lp_v1") || "0"; } catch(e){ return "0"; }})()}</div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px;margin-bottom:20px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h3 style="margin:0;font-family:'Anton',sans-serif;font-size:1.2rem">Letzte Bestellungen</h3>
+            ${myOrders.length > 3 ? '<button type="button" data-tab="orders" style="background:none;border:none;color:var(--ink);font-family:inherit;font-size:.85rem;cursor:pointer;text-decoration:underline">Alle ansehen →</button>' : ''}
+          </div>
+          ${myOrders.length === 0 ? `
+            <p style="color:var(--ink-soft);font-size:.9rem;margin:0 0 14px">Du hast noch keine Bestellungen.</p>
+            <a href="shop.html" class="btn btn-primary">Zur Kollektion</a>
+          ` : `
+            <div style="display:flex;flex-direction:column;gap:10px">
+              ${myOrders.slice(0, 3).map(o => `
+                <div style="display:flex;justify-content:space-between;padding:12px 16px;background:var(--panel);border-radius:10px;align-items:center">
+                  <div>
+                    <strong>${escapeHtmlS(o.order_num || o.id)}</strong><br>
+                    <small style="color:var(--ink-soft)">${new Date(o.created_at).toLocaleDateString("de-DE")}</small>
+                  </div>
+                  <div style="text-align:right">
+                    <strong>${money(o.total)}</strong><br>
+                    <small style="color:var(--ink-soft);text-transform:capitalize">${o.status||'pending'}</small>
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    renderInner();
   }
 
   render();
