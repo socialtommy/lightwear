@@ -556,26 +556,15 @@ function initChrome(){
       else openNav();
     });
 
-    // EVENT-DELEGATION auf das Parent statt einzelne Listener
+    // NUR Close-Button verarbeiten — Links nutzen native Browser-Navigation
     navLinks.addEventListener("click", (e) => {
-      // Close-Button?
       const closeBtn = e.target.closest(".nav-close-btn");
       if(closeBtn){
         e.preventDefault();
         e.stopPropagation();
         closeNav();
-        return;
       }
-      // Link?
-      const link = e.target.closest("a");
-      if(link){
-        const href = link.getAttribute("href");
-        if(href && href !== "#" && !href.startsWith("javascript:")){
-          e.preventDefault();
-          // Sofortige Navigation — Body-Klasse muss NICHT erst entfernt werden
-          window.location.href = href;
-        }
-      }
+      // Für Links: NICHT preventDefault, NICHT abfangen — Browser navigiert nativ
     });
   }
   updateCartCount();
