@@ -556,9 +556,26 @@
 /* BURGER */
 .ah-burger { display: none; }
 .sidebar-backdrop {
-  position: fixed; inset: 0; background: rgba(0,0,0,.5);
-  z-index: 150; animation: admFade .2s var(--adm-ease);
+  position: fixed; inset: 0; background: rgba(0,0,0,.55);
+  backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+  z-index: 199; animation: admFade .2s var(--adm-ease);
+  cursor: pointer;
 }
+/* Close-Button in Sidebar (nur Mobile sichtbar) */
+.sidebar-close {
+  display: none;
+  position: absolute; top: 12px; right: 12px;
+  background: rgba(255,255,255,.1); border: none;
+  width: 38px; height: 38px; border-radius: 99px;
+  cursor: pointer; color: #fff;
+  z-index: 10;
+  align-items: center; justify-content: center;
+}
+.sidebar-close:active { background: rgba(255,255,255,.2); }
+.sidebar-close svg { width: 18px; height: 18px; }
+/* Body-Scroll-Lock wenn Sidebar offen */
+body.admin-body.sidebar-open { overflow: hidden; touch-action: none; }
+body.admin-body.sidebar-open .admin-main { overflow: hidden; pointer-events: none; }
 
 /* MESSAGE THREAD */
 .msg-list { display: grid; gap: 0; }
@@ -657,9 +674,11 @@
   .admin-app { grid-template-columns: 1fr; }
   .admin-sidebar {
     position: fixed; left: -280px; top: 0;
-    width: 270px; z-index: 200;
+    width: 280px; z-index: 200;
     transition: left .3s var(--adm-ease);
+    box-shadow: 4px 0 20px rgba(0,0,0,.3);
   }
+  .sidebar-close { display: flex; }
   .admin-sidebar.open { left: 0; }
   .admin-content { padding: 20px 16px 40px; }
   .admin-header { padding: 14px 16px; }

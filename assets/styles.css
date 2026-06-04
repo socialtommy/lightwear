@@ -2437,9 +2437,26 @@ body.sticky-buy-active .social-proof{
 }
 @media (max-width:760px){
   .nav-toggle{ display:inline-flex; order:3; }
-  .nav-links{ position:fixed; inset:0 0 0 auto; width:min(80vw,300px); background:var(--bg); flex-direction:column; align-items:flex-start; justify-content:center; gap:8px; padding:40px; transform:translateX(100%); transition:transform .35s var(--ease); z-index:120; font-size:1.25rem; border-left:1px solid var(--line); }
-  body.nav-open .nav-links{ transform:none; box-shadow:-30px 0 60px rgba(28,27,24,.18); }
-  body.nav-open::before{ content:""; position:fixed; inset:0; background:rgba(28,27,24,.35); z-index:110; }
+  .nav-links{ position:fixed; inset:0 0 0 auto; width:min(85vw,320px); background:var(--bg); flex-direction:column; align-items:flex-start; justify-content:flex-start; padding-top:72px; gap:6px; padding-left:28px; padding-right:28px; transform:translateX(100%); transition:transform .35s var(--ease); z-index:120; font-size:1.15rem; border-left:1px solid var(--line); }
+  .nav-links a { padding:14px 0; width:100%; border-bottom:1px solid var(--line); font-weight:500; }
+  .nav-links a:last-child { border-bottom:none; }
+  body.nav-open { overflow:hidden; }
+  body.nav-open .nav-links{ transform:none; box-shadow:-30px 0 60px rgba(28,27,24,.25); }
+  body.nav-open::before{
+    content:""; position:fixed; inset:0;
+    background:rgba(28,27,24,.45); z-index:110;
+    backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);
+    cursor:pointer;
+  }
+  /* Close-Button für Storefront-Menü */
+  body.nav-open .nav-links::before{
+    content:"✕";
+    position:absolute; top:18px; right:22px;
+    width:36px; height:36px;
+    background:var(--panel); border-radius:99px;
+    display:grid; place-items:center;
+    font-size:1.1rem; color:var(--ink); cursor:pointer;
+  }
 }
 @media (max-width:520px){
   .look-grid{ grid-template-columns:1fr; }
@@ -2996,4 +3013,84 @@ body.sticky-buy-active .social-proof{
 @media (hover:none) and (pointer:coarse){
   a, button, input, textarea, select { -webkit-tap-highlight-color: transparent; }
   a:active, button:active { opacity: .7; transition: opacity .1s; }
+}
+
+/* =================================================================
+   Z-INDEX HIERARCHIE & OVERLAP-PREVENTION (Mobile)
+   ================================================================= */
+/* Klare Z-Index-Reihenfolge */
+.topbar { z-index: 5; }
+.site-header { z-index: 50; }
+.sticky-buy-bar { z-index: 80; }
+.chat-fab, .chat-bubble { z-index: 90; }
+.compare-bar { z-index: 95; }
+.cookie-banner { z-index: 100; }
+#social-proof, .social-proof, .social-proof-pop { z-index: 105; }
+.nav-links { z-index: 120; }
+body.nav-open::before { z-index: 110; }
+.chat-panel { z-index: 130; }
+.cart-drawer { z-index: 140; }
+.lw-modal-bg, .quick-view-bg, .sa-modal-bg, .ar-modal-bg, .nl-popup-bd { z-index: 9000; }
+#lw-maintenance { z-index: 999999; }
+
+/* Wenn Menü offen → andere Pop-ups verstecken */
+body.nav-open .chat-fab,
+body.nav-open .chat-bubble,
+body.nav-open .sticky-buy-bar,
+body.nav-open .compare-bar,
+body.nav-open .cookie-banner,
+body.nav-open #social-proof,
+body.nav-open .social-proof,
+body.nav-open .social-proof-pop {
+  display: none !important;
+}
+
+/* Wenn Sticky-Buy aktiv: Compare-Bar weg, Cookie-Banner unsichtbar machen */
+body.sticky-buy-active .compare-bar,
+body.sticky-buy-active .cookie-banner,
+body.sticky-buy-active .social-proof,
+body.sticky-buy-active #social-proof {
+  display: none !important;
+}
+
+/* Wenn Cart-Drawer offen: andere Pop-ups verstecken */
+body:has(.cart-drawer.open) .chat-fab,
+body:has(.cart-drawer.open) .sticky-buy-bar,
+body:has(.cart-drawer.open) .compare-bar,
+body:has(.cart-drawer.open) #social-proof,
+body:has(.cart-drawer.open) .social-proof,
+body:has(.cart-drawer.open) .cookie-banner {
+  display: none !important;
+}
+
+/* Wenn Chat-Panel offen auf Mobile: andere Pop-ups verstecken */
+@media (max-width:760px){
+  body:has(.chat-panel.open) .sticky-buy-bar,
+  body:has(.chat-panel.open) .compare-bar,
+  body:has(.chat-panel.open) #social-proof,
+  body:has(.chat-panel.open) .social-proof,
+  body:has(.chat-panel.open) .cookie-banner {
+    display: none !important;
+  }
+}
+
+/* Wenn irgendein Modal offen: alles andere verstecken */
+@media (max-width:760px){
+  body:has(.lw-modal-bg.open) .chat-fab,
+  body:has(.lw-modal-bg.open) .sticky-buy-bar,
+  body:has(.lw-modal-bg.open) .compare-bar,
+  body:has(.lw-modal-bg.open) .cookie-banner,
+  body:has(.sa-modal-bg) .chat-fab,
+  body:has(.sa-modal-bg) .sticky-buy-bar,
+  body:has(.sa-modal-bg) .cookie-banner,
+  body:has(.ar-modal-bg) .chat-fab,
+  body:has(.ar-modal-bg) .sticky-buy-bar,
+  body:has(.nl-popup-bd.open) .chat-fab,
+  body:has(.nl-popup-bd.open) .sticky-buy-bar,
+  body:has(.nl-popup-bd.open) .cookie-banner,
+  body:has(.quick-view-bg) .chat-fab,
+  body:has(.quick-view-bg) .sticky-buy-bar,
+  body:has(.quick-view-bg) .cookie-banner {
+    display: none !important;
+  }
 }

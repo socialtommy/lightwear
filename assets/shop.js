@@ -533,6 +533,25 @@ function initChrome(){
         toggle.setAttribute("aria-expanded", false);
       })
     );
+    // Backdrop-Click schließt das Menü (über body::before)
+    document.addEventListener("click", (e) => {
+      if(!document.body.classList.contains("nav-open")) return;
+      // Click ist außerhalb der Sidebar UND nicht auf dem Toggle?
+      const navLinks = document.querySelector(".nav-links");
+      if(navLinks && !navLinks.contains(e.target) && !toggle.contains(e.target)){
+        document.body.classList.remove("nav-open");
+        toggle.setAttribute("aria-expanded", false);
+      }
+    });
+    // Touch-Backdrop schließt auch
+    document.addEventListener("touchstart", (e) => {
+      if(!document.body.classList.contains("nav-open")) return;
+      const navLinks = document.querySelector(".nav-links");
+      if(navLinks && !navLinks.contains(e.target) && !toggle.contains(e.target)){
+        document.body.classList.remove("nav-open");
+        toggle.setAttribute("aria-expanded", false);
+      }
+    }, { passive: true });
   }
   updateCartCount();
   // Footer-Newsletter: nach Anmeldung Popup nicht mehr triggern + Supabase-Submit

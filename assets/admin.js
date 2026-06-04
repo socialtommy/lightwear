@@ -796,13 +796,26 @@
   function openSidebar(){
     const sb = $(".admin-sidebar"); if(!sb) return;
     sb.classList.add("open");
+    document.body.classList.add("sidebar-open");
+    // Backdrop
     const bd = document.createElement("div");
     bd.className = "sidebar-backdrop";
     bd.addEventListener("click", closeSidebar);
+    bd.addEventListener("touchstart", e => { e.preventDefault(); closeSidebar(); }, { passive: false });
     document.body.appendChild(bd);
+    // Close-X-Button in Sidebar (nur einmal hinzufügen)
+    if(!sb.querySelector(".sidebar-close")){
+      const x = document.createElement("button");
+      x.className = "sidebar-close";
+      x.setAttribute("aria-label", "Menü schließen");
+      x.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg>';
+      x.addEventListener("click", closeSidebar);
+      sb.appendChild(x);
+    }
   }
   function closeSidebar(){
     const sb = $(".admin-sidebar"); if(sb) sb.classList.remove("open");
+    document.body.classList.remove("sidebar-open");
     document.querySelectorAll(".sidebar-backdrop").forEach(b => b.remove());
   }
 
