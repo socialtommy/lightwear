@@ -2781,15 +2781,45 @@ body.sticky-buy-active .social-proof{
 /* Sticky-Buy-Bar: Mobile-Friendly */
 @media (max-width:760px){
   .sticky-buy-bar {
-    padding: 10px 14px !important;
+    padding: 10px 12px !important;
     gap: 10px !important;
     flex-wrap: nowrap;
+    background: #fff !important;
   }
-  .sticky-buy-bar .sb-media { width: 44px !important; height: 54px !important; }
-  .sticky-buy-bar .sb-name { font-size: .85rem !important; }
-  .sticky-buy-bar .sb-price { font-size: .9rem !important; }
-  .sticky-buy-bar .sb-sizes { display: none !important; } /* Größen aus dem Hauptbuy-Bereich nutzen */
-  .sticky-buy-bar .btn { padding: 11px 14px !important; font-size: .85rem; white-space: nowrap; }
+  .sticky-buy-bar .sb-media {
+    width: 44px !important; height: 52px !important;
+    flex: 0 0 44px !important;
+  }
+  .sticky-buy-bar .sb-info {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden;
+  }
+  .sticky-buy-bar .sb-name {
+    font-size: .82rem !important;
+    color: var(--ink) !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0 !important;
+  }
+  .sticky-buy-bar .sb-price {
+    font-size: .92rem !important;
+    color: var(--ink) !important;
+    font-weight: 700 !important;
+    margin-top: 2px !important;
+  }
+  .sticky-buy-bar .sb-sizes { display: none !important; }
+  .sticky-buy-bar .btn {
+    padding: 11px 16px !important;
+    font-size: .82rem !important;
+    white-space: nowrap;
+    flex: 0 0 auto !important;
+  }
 }
 
 /* Cart-Seite */
