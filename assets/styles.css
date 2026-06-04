@@ -2475,16 +2475,15 @@ body.sticky-buy-active .social-proof{
   body.nav-open .nav-links * {
     pointer-events: auto !important;
   }
+  /* Backdrop UNSICHTBAR — nur Click-Catcher zum Schließen, keine Verdunkelung */
   .nav-backdrop{
     position:fixed !important;
     inset:0 !important;
-    background-color:rgba(0,0,0,.5) !important;
+    background-color:transparent !important;
     backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
     z-index:9998 !important;
     cursor:pointer;
-    animation: navFade .25s ease;
   }
-  @keyframes navFade { from{opacity:0} to{opacity:1} }
   .nav-close-btn:active { background:#1C1B18 !important; color:#FBFAF6 !important; }
 }
 @media (max-width:520px){
@@ -2792,26 +2791,36 @@ body.sticky-buy-active .social-proof{
   .size-row { gap: 6px; flex-wrap: wrap; }
   .size-row .size-btn { min-width: 48px; padding: 10px 14px; font-size: .9rem; border-radius: 10px; }
 
-  /* Buy-Row: kompakter, Button nicht zu groß */
+  /* Buy-Row: alles bleibt im Viewport */
   .buy-row {
     gap: 8px !important;
     margin-top: 14px !important;
     align-items: stretch !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
   .qty {
     flex: 0 0 auto !important;
     height: 48px !important;
     border-radius: 10px !important;
     padding: 0 4px !important;
+    width: auto !important;
+    min-width: 110px !important;
   }
-  .qty button { width: 34px !important; height: 34px !important; font-size: 1.1rem !important; }
-  .qty span { min-width: 28px !important; font-size: 1rem; }
+  .qty button { width: 32px !important; height: 32px !important; font-size: 1.1rem !important; }
+  .qty span { min-width: 24px !important; font-size: 1rem; }
   .buy-row .btn {
     border-radius: 10px !important;
-    padding: 13px 18px !important;
-    font-size: .95rem !important;
+    padding: 13px 12px !important;
+    font-size: .9rem !important;
     height: 48px !important;
     line-height: 1 !important;
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
   /* Gallery */

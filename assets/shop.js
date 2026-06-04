@@ -527,6 +527,7 @@ function initChrome(){
     function openNav(){
       document.body.classList.add("nav-open");
       toggle.setAttribute("aria-expanded", "true");
+      // Unsichtbare Backdrop (nur als Click-Catcher, keine Verdunkelung)
       if(!document.querySelector(".nav-backdrop")){
         const bd = document.createElement("div");
         bd.className = "nav-backdrop";
