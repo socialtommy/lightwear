@@ -2145,6 +2145,65 @@
           setTimeout(() => location.reload(), 800);
         }
       });
+
+      // Supabase Migration Button
+      const supaCard = document.createElement("div");
+      supaCard.className = "adm-card";
+      supaCard.style.marginTop = "20px";
+      supaCard.innerHTML = `
+        <div class="adm-card-h"><h3>🔥 Supabase Migration</h3><span class="pill pill-green">Phase D</span></div>
+        <div class="adm-card-b">
+          <p style="margin:0 0 14px;color:var(--adm-ink-soft);font-size:.9rem">Migriere alle Produkte einmalig in die echte Supabase-Datenbank. Danach werden Edits dort gespeichert und der Shop lädt von dort.</p>
+          <div class="adm-btn-row">
+            <button class="adm-btn primary" id="sb-seed-products">
+              📦 Alle Produkte zu Supabase pushen
+            </button>
+            <button class="adm-btn" id="sb-check">
+              🔍 Verbindung testen
+            </button>
+          </div>
+          <div id="sb-status" style="margin-top:12px;font-size:.85rem"></div>
+        </div>
+      `;
+      root.appendChild(supaCard);
+
+      $("#sb-seed-products").addEventListener("click", async () => {
+        const statusEl = $("#sb-status");
+        if(typeof window.lwSeedProducts !== "function"){
+          statusEl.innerHTML = '<span style="color:var(--adm-danger)">✗ Supabase-Client nicht geladen</span>';
+          return;
+        }
+        statusEl.innerHTML = '⏳ Pushe Produkte zu Supabase...';
+        const products = window.PRODUCTS || [];
+        if(products.length === 0){
+          statusEl.innerHTML = '<span style="color:var(--adm-warn)">⚠ Keine Produkte in window.PRODUCTS gefunden</span>';
+          return;
+        }
+        try {
+          const result = await window.lwSeedProducts(products);
+          statusEl.innerHTML = `<span style="color:var(--adm-success)">✓ ${products.length} Produkte erfolgreich migriert (${result?.length || 0} in DB)</span>`;
+          logActivity("supabase", "Produkte migriert: " + products.length);
+          toast("✓ Produkte in Supabase", "success");
+        } catch(err){
+          console.error(err);
+          statusEl.innerHTML = '<span style="color:var(--adm-danger)">✗ Fehler: ' + escapeHtml(err.message || String(err)) + '</span>';
+        }
+      });
+
+      $("#sb-check").addEventListener("click", async () => {
+        const statusEl = $("#sb-status");
+        statusEl.innerHTML = '⏳ Teste Verbindung...';
+        if(typeof window.lwGetProducts !== "function"){
+          statusEl.innerHTML = '<span style="color:var(--adm-danger)">✗ Client nicht da</span>';
+          return;
+        }
+        try {
+          const list = await window.lwGetProducts();
+          statusEl.innerHTML = `<span style="color:var(--adm-success)">✓ Verbunden — ${list.length} Produkte in Supabase</span>`;
+        } catch(err){
+          statusEl.innerHTML = '<span style="color:var(--adm-danger)">✗ Fehler: ' + escapeHtml(err.message || String(err)) + '</span>';
+        }
+      });
     },
 
     // -------- MESSAGES (Supabase + lokal) --------

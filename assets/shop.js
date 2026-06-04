@@ -5209,13 +5209,55 @@ function applyAdminProductChanges(){
   }
 }
 
+/* ---------- Produkte aus Supabase nachladen (überschreibt PRODUCTS) ---------- */
+async function loadProductsFromSupabase(){
+  if(typeof window.lwGetProducts !== "function") return false;
+  try {
+    const list = await window.lwGetProducts();
+    if(!list || list.length === 0) return false;
+    // Mappe von snake_case zurück zu camelCase und überschreibe PRODUCTS
+    const mapped = list.map(r => ({
+      id: r.id,
+      name: r.name,
+      price: Number(r.price) || 0,
+      compareAt: r.compare_at != null ? Number(r.compare_at) : undefined,
+      category: r.category,
+      meta: r.meta,
+      desc: r.description,
+      description: r.description,
+      img: r.img,
+      image: r.image,
+      gallery: r.gallery,
+      sizes: r.sizes || ["S","M","L","XL"],
+      stock: r.stock ?? 50,
+      active: r.active !== false,
+      limitedEdition: !!r.limited_edition,
+      editionSize: r.edition_size,
+      editionSold: r.edition_sold,
+      preorder: !!r.preorder,
+      preorderDate: r.preorder_date,
+      preorderDiscount: r.preorder_discount
+    })).filter(p => p.active !== false);
+    // PRODUCTS-Array in-place ersetzen
+    PRODUCTS.length = 0;
+    mapped.forEach(p => PRODUCTS.push(p));
+    console.log("✓", mapped.length, "Produkte aus Supabase geladen");
+    return true;
+  } catch(err){
+    console.warn("Supabase-Produkte konnten nicht geladen werden, nutze lokale:", err);
+    return false;
+  }
+}
+
 /* ---------- Boot ---------- */
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const page = document.body.dataset.page;
   // ADMIN-PANEL: keine Shop-Chrome (Chatbot, Pop-ups, Cookie-Banner etc.)
   if (page === "admin") return;
-  // Admin-Änderungen an Produkten (Overrides, Extras, Active-Toggle) anwenden
-  applyAdminProductChanges();
+  // Versuche zuerst Produkte aus Supabase zu laden — falls leer oder Fehler, lokale Daten
+  const supabaseLoaded = await loadProductsFromSupabase();
+  // Admin-localStorage-Overrides nur anwenden wenn KEIN Supabase-Load (Fallback-Modus)
+  if(!supabaseLoaded) applyAdminProductChanges();
   initChrome();
   // Admin-Settings prüfen für Chatbot/Social-Proof
   let _siteSettings = null;
