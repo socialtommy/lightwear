@@ -1,5 +1,5 @@
 name = "lightwear"
-main = "src/index.ts"   # oder dein Einstiegspunkt
+main = "src/index.ts"
 compatibility_date = "2026-06-05"
 
 [assets]
