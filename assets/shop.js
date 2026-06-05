@@ -1655,6 +1655,8 @@ function drawerRemove(i){
 }
 function openDrawer(){
   renderDrawer();
+  // Drawer-Header-Zähler synchronisieren (renderDrawer setzt initial "0")
+  updateCartCount();
   document.getElementById("lw-drawer").classList.add("open");
   document.getElementById("lw-drawer-bd").classList.add("open");
   document.body.style.overflow = "hidden";
