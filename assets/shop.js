@@ -1557,7 +1557,7 @@ function ensureDrawer(){
   d.id = "lw-drawer"; d.className = "drawer";
   d.innerHTML = `
     <div class="drawer-head">
-      <h3>Warenkorb (<span class="cart-count">0</span>)</h3>
+      <h3>Warenkorb (<span class="cart-count drawer-count">0</span>)</h3>
       <button class="drawer-close" aria-label="Schließen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
     </div>
     <div class="drawer-body" id="drawer-body"></div>
@@ -5788,7 +5788,24 @@ async function loadProductsFromSupabase(){
     // PRODUCTS-Array in-place ersetzen
     PRODUCTS.length = 0;
     mapped.forEach(p => PRODUCTS.push(p));
-    console.log("✓", mapped.length, "Produkte aus Supabase geladen");
+    // Sale-Flags und Badges nach Supabase-Load erneut anwenden
+    // (Supabase liefert bereits den reduzierten Preis — wir setzen NUR Flag/Badge,
+    //  damit Filter "Sale" greift und die Karte ein Badge zeigt)
+    PRODUCTS.forEach(p => {
+      if (RENAMES[p.id]) p.name = RENAMES[p.id];
+      const sale = SALE_DATA[p.id];
+      if (sale){
+        p.salePct = sale.pct;
+        // Original-Preis rekonstruieren (für „durchgestrichener Preis"-Anzeige)
+        p.originalPrice = Math.round((p.price / (1 - sale.pct / 100)) * 100) / 100;
+        p.badge = `−${sale.pct}%`;
+        p.badgeClass = "sale";
+      } else if (NEW_BADGES.includes(p.id)){
+        p.badge = "Neu";
+        p.badgeClass = "new";
+      }
+    });
+    console.log("✓", mapped.length, "Produkte aus Supabase geladen (Sale/Badges angewendet)");
     return true;
   } catch(err){
     console.warn("Supabase-Produkte konnten nicht geladen werden, nutze lokale:", err);
