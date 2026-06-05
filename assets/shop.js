@@ -520,96 +520,88 @@ function initChrome(){
     window.addEventListener("scroll", onScroll, { passive:true });
     onScroll();
   }
-  // Mobiles Menü — Event-Delegation für maximale Zuverlässigkeit
+  // ============================================================
+  // MOBILE NAV — KOMPLETT NEU: Eigenes Drawer-Element am <body>
+  // Bypassed komplett die alte .nav-links damit nichts blockt
+  // ============================================================
   const toggle = document.querySelector(".nav-toggle");
-  const navLinks = document.querySelector(".nav-links");
-  if (toggle && navLinks){
-    // SUPER-BRUTAL: jedem Link wird ein VERSTECKTES Form gegeben das beim Click submittet wird
-    // Form-Submission lässt sich nicht von Extensions/Scripts blockieren
-    navLinks.querySelectorAll("a").forEach(a => {
-      const href = a.getAttribute("href");
-      if(!href || href === "#" || href.startsWith("javascript:")) return;
-      // Title für Hover-Preview
-      a.setAttribute("title", href);
-      // Inline onclick (mehrere Fallback-Strategien)
-      a.setAttribute("onclick",
-        "try{window.location.assign('"+href.replace(/'/g,"\\'")+"');return false;}" +
-        "catch(e){try{window.location='"+href.replace(/'/g,"\\'")+"';return false;}" +
-        "catch(e2){var f=document.createElement('form');f.method='get';f.action='"+href.replace(/'/g,"\\'")+"';document.body.appendChild(f);f.submit();return false;}}"
-      );
-      // Auch href setzen falls weg
-      a.setAttribute("href", href);
-      // Pointer events explizit auf auto
-      a.style.pointerEvents = "auto";
-      a.style.cursor = "pointer";
-    });
-    function openNav(){
-      document.body.classList.add("nav-open");
+  const origNav = document.querySelector(".nav-links");
+  if (toggle && origNav && !document.getElementById("lw-mobile-drawer")){
+    // Links aus dem Original lesen
+    const linkData = Array.from(origNav.querySelectorAll("a")).map(a => ({
+      href: a.getAttribute("href") || "#",
+      text: (a.textContent || "").trim()
+    })).filter(l => l.href && l.href !== "#");
+
+    // Drawer-HTML bauen (komplett separates Element, eigene Klassen)
+    const drawer = document.createElement("aside");
+    drawer.id = "lw-mobile-drawer";
+    drawer.setAttribute("aria-hidden", "true");
+    drawer.innerHTML =
+      '<div class="lw-md-panel">' +
+        '<button type="button" class="lw-md-close" aria-label="Menü schließen">' +
+          '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>' +
+        '</button>' +
+        '<nav class="lw-md-nav">' +
+          linkData.map(l =>
+            '<a href="' + l.href.replace(/"/g,'&quot;') + '">' + l.text.replace(/</g,'&lt;') + '</a>'
+          ).join('') +
+        '</nav>' +
+      '</div>' +
+      '<div class="lw-md-back" aria-hidden="true"></div>';
+    document.body.appendChild(drawer);
+
+    // CSS injecten (komplett gekapselt, keine Konflikte)
+    if (!document.getElementById("lw-md-styles")){
+      const st = document.createElement("style");
+      st.id = "lw-md-styles";
+      st.textContent =
+        '#lw-mobile-drawer{position:fixed;inset:0;z-index:99999;pointer-events:none;visibility:hidden;}' +
+        '#lw-mobile-drawer.open{pointer-events:auto;visibility:visible;}' +
+        '#lw-mobile-drawer .lw-md-back{position:absolute;inset:0;background:transparent;}' +
+        '#lw-mobile-drawer .lw-md-panel{position:absolute;top:0;right:0;bottom:0;width:min(82vw,320px);background:#FBFAF6;box-shadow:-20px 0 50px rgba(0,0,0,.18);border-left:1px solid #e6e1d4;transform:translateX(100%);transition:transform .32s cubic-bezier(.22,.61,.36,1);display:flex;flex-direction:column;padding:calc(18px + env(safe-area-inset-top,0px)) 22px calc(20px + env(safe-area-inset-bottom,0px));box-sizing:border-box;}' +
+        '#lw-mobile-drawer.open .lw-md-panel{transform:translateX(0);}' +
+        '#lw-mobile-drawer .lw-md-close{align-self:flex-end;width:42px;height:42px;border:1px solid rgba(28,27,24,.15);border-radius:99px;background:#fff;color:#1a1a1a;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;margin-bottom:18px;}' +
+        '#lw-mobile-drawer .lw-md-nav{display:flex;flex-direction:column;}' +
+        '#lw-mobile-drawer .lw-md-nav a{display:block;padding:18px 0;font-family:Inter,system-ui,sans-serif;font-size:1.1rem;font-weight:500;color:#1C1B18;text-decoration:none;border-bottom:1px solid rgba(28,27,24,.1);}' +
+        '#lw-mobile-drawer .lw-md-nav a:last-child{border-bottom:none;}' +
+        '#lw-mobile-drawer .lw-md-nav a:active{background:rgba(28,27,24,.05);}' +
+        '@media (min-width:761px){#lw-mobile-drawer{display:none!important;}}';
+      document.head.appendChild(st);
+    }
+
+    const openDrawer = () => {
+      drawer.classList.add("open");
+      drawer.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
       toggle.setAttribute("aria-expanded", "true");
-      // Unsichtbare Backdrop (nur als Click-Catcher, keine Verdunkelung)
-      if(!document.querySelector(".nav-backdrop")){
-        const bd = document.createElement("div");
-        bd.className = "nav-backdrop";
-        bd.addEventListener("click", closeNav);
-        document.body.appendChild(bd);
-      }
-      if(!navLinks.querySelector(".nav-close-btn")){
-        const closeBtn = document.createElement("button");
-        closeBtn.type = "button";
-        closeBtn.className = "nav-close-btn";
-        closeBtn.setAttribute("aria-label","Menü schließen");
-        // FIXED position relativ zur Viewport (statt absolute) — verhindert Overlap-Probleme
-        closeBtn.style.cssText = "position:fixed;top:calc(20px + env(safe-area-inset-top, 0px));right:18px;width:44px;height:44px;background:#fff;border:1px solid rgba(28,27,24,.15);border-radius:99px;cursor:pointer;z-index:10000;display:flex;align-items:center;justify-content:center;padding:0;box-sizing:border-box;";
-        closeBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>';
-        document.body.appendChild(closeBtn);  // ← AN BODY anhängen, NICHT an nav-links!
-      }
-    }
-    function closeNav(){
-      document.body.classList.remove("nav-open");
-      toggle.setAttribute("aria-expanded","false");
-      document.querySelectorAll(".nav-backdrop").forEach(b => b.remove());
-      document.querySelectorAll(".nav-close-btn").forEach(b => b.remove());
-    }
+    };
+    const closeDrawer = () => {
+      drawer.classList.remove("open");
+      drawer.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+      toggle.setAttribute("aria-expanded", "false");
+    };
 
     toggle.addEventListener("click", (e) => {
+      e.preventDefault();
       e.stopPropagation();
-      if(document.body.classList.contains("nav-open")) closeNav();
-      else openNav();
+      if (drawer.classList.contains("open")) closeDrawer();
+      else openDrawer();
     });
 
-    // Link-Klicks → manuelle Navigation mit mehreren Fallback-Strategien
-    navLinks.addEventListener("click", (e) => {
-      const link = e.target.closest("a");
-      if(!link) return;
-      const href = link.getAttribute("href");
-      if(href && href !== "#" && !href.startsWith("javascript:")){
-        e.preventDefault();
-        try { window.location.href = href; }
-        catch(err) {
-          try { window.location.assign(href); }
-          catch(err2) {
-            try { document.location = href; }
-            catch(err3) { console.error("Navigation blocked", err3); }
-          }
-        }
-      }
-    });
+    // Close-Button + Backdrop schließen das Drawer
+    drawer.querySelector(".lw-md-close").addEventListener("click", closeDrawer);
+    drawer.querySelector(".lw-md-back").addEventListener("click", closeDrawer);
 
-    // CAPTURE-Phase auf Document — fängt Clicks bevor andere Extensions sie abgreifen
-    document.addEventListener("click", (e) => {
-      const link = e.target.closest(".nav-links a");
-      if(!link) return;
-      const href = link.getAttribute("href");
-      console.log("[CAPTURE NAV CLICK]", href, "target:", e.target.tagName);
-      if(href && href !== "#" && !href.startsWith("javascript:")){
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        // Erzwinge Navigation via Location-Object
-        const loc = window.location;
-        try { loc.href = href; }
-        catch(err) { setTimeout(() => { loc.href = href; }, 0); }
-      }
-    }, true);  // ← TRUE = Capture-Phase!
+    // Links: NICHTS abfangen — native Browser-Navigation
+    // Wir loggen nur zur Diagnose, ohne preventDefault
+    drawer.querySelectorAll(".lw-md-nav a").forEach(a => {
+      a.addEventListener("click", () => {
+        // Drawer NICHT schliessen vor Navigation — Browser navigiert sofort
+        console.log("[LW-MD CLICK]", a.getAttribute("href"));
+      });
+    });
   }
   updateCartCount();
   // Footer-Newsletter: nach Anmeldung Popup nicht mehr triggern + Supabase-Submit
