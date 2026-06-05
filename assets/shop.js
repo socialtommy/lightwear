@@ -644,12 +644,12 @@ function cardHTML(p){
     ? `<img class="card-img-back" src="${p.imgBack}" alt="" loading="lazy">`
     : "";
   return `<article class="card">
-    <a class="card-media" href="produkt.html?id=${p.id}">
+    <a class="card-media" href="produkt?id=${p.id}">
       <img class="card-img-front" src="${p.img}" alt="${p.name}" loading="lazy">
       ${back}
     </a>
     <div class="card-body">
-      <div class="pname"><a href="produkt.html?id=${p.id}">${p.name}</a></div>
+      <div class="pname"><a href="produkt?id=${p.id}">${p.name}</a></div>
       <div class="pmeta">${p.meta}</div>
       <span class="pprice">${money(p.price)}</span>
       <button class="btn btn-outline btn-block" data-add="${p.id}">In den Warenkorb</button>
@@ -803,14 +803,14 @@ function initShopTheLook(){
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
         <div class="hotspot-popup">
           <div class="hp-row">
-            <a class="hp-img" href="produkt.html?id=${p.id}"><img src="${p.img}" alt=""></a>
+            <a class="hp-img" href="produkt?id=${p.id}"><img src="${p.img}" alt=""></a>
             <div class="hp-info">
               <div class="hp-name">${p.name}</div>
               <div class="hp-price">${money(p.price)}</div>
             </div>
           </div>
           <div class="hp-actions">
-            <a href="produkt.html?id=${p.id}">Ansehen</a>
+            <a href="produkt?id=${p.id}">Ansehen</a>
             <button class="primary" data-hp-add="${p.id}">In den Warenkorb</button>
           </div>
         </div>`;
@@ -1153,9 +1153,9 @@ function initCart(){
     const items = cart.map((l, i) => {
       const p = getProduct(l.id); if (!p) return "";
       return `<div class="cart-item" data-row="${i}">
-        <a class="ci-media" href="produkt.html?id=${p.id}"><img src="${p.img}" alt="${p.name}"></a>
+        <a class="ci-media" href="produkt?id=${p.id}"><img src="${p.img}" alt="${p.name}"></a>
         <div class="ci-info">
-          <div class="ci-name"><a href="produkt.html?id=${p.id}">${p.name}</a></div>
+          <div class="ci-name"><a href="produkt?id=${p.id}">${p.name}</a></div>
           <div class="ci-meta">Größe: <strong>${l.size}</strong> · Einzelpreis: ${money(p.price)}</div>
           <div class="ci-actions">
             <div class="qty">
@@ -1451,13 +1451,13 @@ function cardHTMLPlus(p){
     }).join("")}
   </div>`;
   return `<article class="card">
-    <a class="card-media" href="produkt.html?id=${p.id}">
+    <a class="card-media" href="produkt?id=${p.id}">
       <img class="card-img-front" src="${p.img}" alt="${p.name}" loading="lazy">
       ${back}
       ${quickSizes}
     </a>
     <div class="card-body">
-      <div class="pname"><a href="produkt.html?id=${p.id}">${p.name}</a></div>
+      <div class="pname"><a href="produkt?id=${p.id}">${p.name}</a></div>
       <div class="pmeta">${p.meta}</div>
       <div class="card-stars"><span class="stars">${starsSVG(Math.round(rev.avg), 5, 13)}</span> <span>${rev.avg.toFixed(1)} (${rev.count})</span></div>
       <span class="pprice">${money(p.price)}</span>
@@ -1527,7 +1527,7 @@ function openQuickView(id){
           ${SIZES.map((s,i) => `<button class="size-btn ${i===1?"active":""}" data-size="${s}">${s}</button>`).join("")}
         </div>
         <button class="btn btn-primary btn-block" id="qv-add">In den Warenkorb</button>
-        <a href="produkt.html?id=${p.id}" class="qv-detail-link">Vollständige Details ansehen →</a>
+        <a href="produkt?id=${p.id}" class="qv-detail-link">Vollständige Details ansehen →</a>
       </div>
     </div>`;
   let qvSize = "M";
@@ -1757,7 +1757,7 @@ function renderSearch(q){
   out.innerHTML = `<div class="search-results-wrap">
     <div class="search-meta">${matches.length} Treffer für „${q}"</div>
     <div class="search-grid">
-      ${matches.map(p => `<a class="search-result" href="produkt.html?id=${p.id}">
+      ${matches.map(p => `<a class="search-result" href="produkt?id=${p.id}">
         <div class="sr-media"><img src="${p.img}" alt=""></div>
         <div class="sr-name">${p.name}</div>
         <div class="sr-price">${money(p.price)}</div>
@@ -3763,7 +3763,7 @@ function smartAnswer(rawText){
       if (p.originalPrice) txt += ` (Statt ${money(p.originalPrice)} — Sale!)`;
       return {
         html: fmt(txt),
-        link: { url: `produkt.html?id=${p.id}`, text: "Ansehen" },
+        link: { url: `produkt?id=${p.id}`, text: "Ansehen" },
         suggestions: ["Welche Größen gibt es?","Material?","Mehr Bilder?"]
       };
     }
@@ -3789,7 +3789,7 @@ function smartAnswer(rawText){
     const fav = getProduct("jesus-polo");
     return {
       html: fmt(`Mein Favorit ist das **${fav.name}** für ${money(fav.price)} — Bestseller und super vielseitig. Auch sehr beliebt: SAVED BY GRACE Hoodie und FAITH Barrel Pants.`),
-      link: { url: `produkt.html?id=jesus-polo`, text: "JESUS Polo ansehen" },
+      link: { url: `produkt?id=jesus-polo`, text: "JESUS Polo ansehen" },
       suggestions: ["Was gibt's noch?", "Sale-Produkte?", "Nächster Drop?"]
     };
   }
@@ -4784,7 +4784,7 @@ function showSocialProof(){
     <button class="sp-close" aria-label="Schließen">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg>
     </button>
-    <a class="sp-img" href="produkt.html?id=${product.id}"><img src="${product.img}" alt=""></a>
+    <a class="sp-img" href="produkt?id=${product.id}"><img src="${product.img}" alt=""></a>
     <div class="sp-text">
       <div class="sp-name">${name} aus ${city}</div>
       <div class="sp-info">hat ${product.name.split(" ").slice(0,3).join(" ")} gekauft</div>
@@ -4977,7 +4977,7 @@ function openCompareModal(){
               return `<dt>${k}</dt><dd>${v}</dd>`;
             }).join("")}
           </dl>
-          <a href="produkt.html?id=${p.id}" class="btn btn-outline" style="margin-top:auto; display:block; text-align:center;">Produkt ansehen</a>
+          <a href="produkt?id=${p.id}" class="btn btn-outline" style="margin-top:auto; display:block; text-align:center;">Produkt ansehen</a>
         </div>`;
       }).join("")}
     </div>`;
