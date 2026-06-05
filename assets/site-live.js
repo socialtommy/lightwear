@@ -133,7 +133,163 @@
     // Diverses
     "Treten Sie unserer Bewegung bei": "Join our movement",
     "Bio-Baumwolle": "Organic cotton",
-    "John 8:12": "John 8:12"
+    "John 8:12": "John 8:12",
+    // Hero / Leads — Startseite & Section-Pages
+    "Glaube zum Anziehen. Christliche Streetwear, die deine Botschaft trägt — gemacht, um Licht in die Welt zu bringen.":
+      "Faith to wear. Christian streetwear that carries your message — made to bring light into the world.",
+    "Lightwear Collective ist mehr als eine Kleidungsmarke. Es ist eine Bewegung für die, die ihren Glauben nicht verstecken — und ihn in die Welt tragen wollen.":
+      "Lightwear Collective is more than a clothing brand. It's a movement for those who don't hide their faith — and want to carry it into the world.",
+    "Live-Releases, kommende Capsules, exklusive Kollabs. Markiere dir die Termine — Pieces sind limitiert.":
+      "Live releases, upcoming capsules, exclusive collabs. Save the dates — pieces are limited.",
+    "Hier findest du Antworten auf die häufigsten Fragen. Wenn du etwas nicht findest —":
+      "Find answers to the most common questions here. If you can't find what you need —",
+    "schreib uns einfach": "just write us",
+    "Unsere Stücke fallen überwiegend boxy oder oversized. Wenn du unsicher bist — eine Nummer kleiner geht in den meisten Fällen auch.":
+      "Our pieces mostly fit boxy or oversized. If unsure — sizing down usually works fine.",
+    "Mode darf nicht auf Kosten von Menschen oder Umwelt gehen. Wie wir versuchen, das ernst zu nehmen.":
+      "Fashion shouldn't come at the cost of people or the environment. How we try to take that seriously.",
+    "Egal ob Frage zur Bestellung, zur Größe oder eine Idee für eine Kollab — schreib uns. Wir antworten meistens innerhalb von 24 Stunden.":
+      "Whether a question about your order, sizing, or a collab idea — write us. We usually reply within 24 hours.",
+    "Schnell, fair und transparent. Hier findest du alle Infos rund um Lieferung, Versand und Retoure.":
+      "Fast, fair and transparent. All info on delivery, shipping and returns.",
+    "Allgemeine Geschäftsbedingungen für den Onlineshop von Lightwear Collective.":
+      "General terms and conditions for the Lightwear Collective online shop.",
+    "Deine Daten gehören dir. Hier erklären wir transparent, was wir mit welchen Daten machen — und warum.":
+      "Your data belongs to you. We transparently explain what data we use and why.",
+    // Newsletter / Footer
+    "Neue Drops, Stories und 10% auf deine erste Bestellung.": "New drops, stories and 10% off your first order.",
+    "Jederzeit abbestellbar. Es gilt unsere Datenschutzerklärung.": "Unsubscribe anytime. Our privacy policy applies.",
+    "Christian Streetwear aus Liebe zum Detail. Gemacht, um Licht in die Welt zu tragen.":
+      "Christian streetwear with love for detail. Made to carry light into the world.",
+    // Drops
+    "Drop-Calendar": "Drop calendar",
+    "Was als": "What's coming",
+    "Nächstes": "Next",
+    "kommt": "",
+    "Bundle Builder": "Bundle Builder",
+    "Geschenkkarte": "Gift card",
+    // Eyebrows
+    "John 8 12": "John 8:12",
+    "Mehr als Kleidung": "More than clothing",
+    "Unser Versprechen": "Our promise",
+    "Stell dein Set zusammen": "Build your set",
+    "Verschenke Licht": "Gift light",
+    "Find your fit": "Find your fit",
+    "Häufige Fragen": "FAQ",
+    "Wir sind für dich da": "We're here for you",
+    "Service": "Service",
+    "Rechtliches": "Legal",
+    "Dein Bereich": "Your area",
+    "Fast geschafft": "Almost there",
+    "Sondern etwas, das du anziehst.": "But something you put on.",
+    // Bundle
+    "Wähle drei Pieces aus unserer Kollektion und bekomme automatisch": "Choose three pieces from our collection and automatically get",
+    "Rabatt auf das ganze Set.": "discount on the whole set.",
+    "T-Shirt oder Polo": "T-shirt or polo",
+    "Hoodie oder Sweater": "Hoodie or sweater",
+    "Hose oder Accessoire": "Pants or accessory",
+    "Wähle ein Produkt": "Choose a product",
+    "Klick, um ein Produkt auszuwählen": "Click to choose a product",
+    "Produkt wählen": "Choose product",
+    "Anderes wählen": "Change",
+    "Wähle ein Piece": "Choose a piece",
+    // Find your fit
+    "Wir stellen dir ein paar Fragen — du klickst, was zu dir passt. Am Ende bekommst du eine handverlesene Auswahl von Pieces, die zu deinem Vibe passen.":
+      "We'll ask you a few questions — click what fits you. At the end you get a hand-picked selection of pieces matching your vibe.",
+    "~ 90 Sekunden": "~ 90 seconds",
+    "Produkte für dich": "products for you",
+    "Anonym, ohne Anmeldung": "Anonymous, no signup",
+    "Los geht's": "Let's go",
+    "Frage": "Question",
+    "von": "of",
+    "Wähle eine Option zum Fortfahren": "Choose an option to continue",
+    "Zurück": "Back",
+    "Das ist": "This is",
+    "dein": "your",
+    "Vibe": "Vibe",
+    "Basierend auf deinen Antworten — sechs Pieces, die zu dir passen könnten.":
+      "Based on your answers — six pieces that could fit you.",
+    "Deine Auswahl": "Your selection",
+    // Geschenkkarte
+    "Ideal für Geburtstage, Konfirmation, Taufe oder einfach so. Der Beschenkte sucht sich aus, was zu ihm passt.":
+      "Ideal for birthdays, confirmations, baptisms or just because. The recipient picks what fits them.",
+    "Eine": "A",
+    "als Botschaft": "as a message",
+    "Wert auswählen": "Choose value",
+    "Empfänger": "Recipient",
+    "Name des Empfängers": "Recipient name",
+    "Von (Dein Name)": "From (your name)",
+    "Persönliche Nachricht (Optional)": "Personal message (optional)",
+    "Geschenkkarte erstellen": "Create gift card",
+    "Dein Einlöse-Code (klicken zum Kopieren):": "Your redeem code (click to copy):",
+    "Jetzt shoppen": "Shop now",
+    "Weitere Karte erstellen": "Create another card",
+    // Warenkorb
+    "Hier ist": "Here is",
+    "noch": "still",
+    "nichts": "nothing",
+    "Lass uns das ändern — entdecke die Kollektion und trag dein Licht weiter.":
+      "Let's change that — discover the collection and carry your light further.",
+    "Noch": "Still",
+    "bis zum kostenlosen Versand": "until free shipping",
+    "Du sammelst": "You earn",
+    "Light Points": "Light Points",
+    "mit dieser Bestellung": "with this order",
+    "Gutschein- oder Geschenkkarten-Code": "Coupon or gift card code",
+    "Einlösen": "Apply",
+    // Kontakt
+    "Sag": "Say",
+    "Hallo": "Hello",
+    "Schreib uns": "Write us",
+    "Das Lightwear-Team liest jede einzelne Nachricht. Wir nehmen uns Zeit für dich — sag uns einfach, worum es geht.":
+      "The Lightwear team reads every single message. We take time for you — just tell us what it's about.",
+    "E-Mail": "Email",
+    "Instagram": "Instagram",
+    "Antwortzeit": "Response time",
+    "Mo–Fr innerhalb von 24 Stunden": "Mon–Fri within 24 hours",
+    "Nachricht senden": "Send message",
+    "Name": "Name",
+    "Worum geht's?": "What's it about?",
+    "Bestellung, Größe, Kollab, …": "Order, size, collab, …",
+    "Deine Nachricht": "Your message",
+    "Absenden": "Send",
+    "Danke! Deine Nachricht ist bei uns. Wir melden uns innerhalb von 24 Stunden.":
+      "Thanks! Your message is in. We'll get back to you within 24 hours.",
+    // Konto
+    "Mein Konto": "My account",
+    "Übersicht": "Overview",
+    "Bestellungen": "Orders",
+    "Profil": "Profile",
+    "Willkommen zurück": "Welcome back",
+    "Letzte Bestellungen": "Recent orders",
+    // 404
+    "Du hast den": "You lost the",
+    "Weg": "way",
+    "verloren": "",
+    "Zurück zum Licht": "Back to the light",
+    "Vielleicht suchst du eine dieser Seiten?": "Maybe you're looking for one of these?",
+    // Nachhaltigkeit
+    "Anders": "Differently",
+    "produzieren": "produced",
+    "Bio-Baumwolle": "Organic cotton",
+    "Faire Löhne": "Fair wages",
+    "Kleine Auflagen statt Massenware": "Small batches, no mass production",
+    "Klimaneutraler Versand": "Climate-neutral shipping",
+    "Recyclebares Verpackungsmaterial": "Recyclable packaging",
+    // PDP
+    "Sonderangebot endet in": "Sale ends in",
+    "Klassisches Loose Tee mit „TRUST GOD\"-Print. Komfortabel und vielseitig.":
+      "Classic loose tee with \"TRUST GOD\" print. Comfortable and versatile.",
+    "Oversized T-Shirt mit „I SEE GOD EVERYWHERE\"-Print (Psalm 139). Schwere 100%-Baumwoll-Qualität mit lässigem, modernem Schnitt.":
+      "Oversized T-shirt with \"I SEE GOD EVERYWHERE\" print (Psalm 139). Heavy 100% cotton quality with relaxed, modern fit.",
+    "Boxy geschnittenes Polo-Shirt mit Kontraststreifen am Kragen und dezentem „JESUS\"-Print auf der Brust. Aus schwerer Bio-Baumwolle – fällt locker und modern.":
+      "Boxy-cut polo shirt with contrast collar stripes and subtle \"JESUS\" print on the chest. Heavy organic cotton — drapes loose and modern.",
+    "Kostenloser Versand ab 50 € · 30 Tage Rückgabe": "Free shipping over €50 · 30-day returns",
+    "Welche Größe passt mir?": "Which size fits me?",
+    "Zum Vergleich": "Compare",
+    "Bei Restock benachrichtigen": "Notify on restock",
+    "Das könnte dir auch gefallen": "You might also like",
+    "Passt dazu": "Matches with"
   };
 
   function t(text){
