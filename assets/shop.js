@@ -524,6 +524,16 @@ function initChrome(){
   const toggle = document.querySelector(".nav-toggle");
   const navLinks = document.querySelector(".nav-links");
   if (toggle && navLinks){
+    // BRUTAL FIX: Inline onclick auf jeden Link setzen — bypassed alle Extensions
+    navLinks.querySelectorAll("a").forEach(a => {
+      const href = a.getAttribute("href");
+      if(href && href !== "#" && !href.startsWith("javascript:")){
+        // Inline onclick als String (kein Closure, kein addEventListener)
+        a.setAttribute("onclick", `window.location.assign('${href.replace(/'/g, "\\'")}'); return false;`);
+        // Title für Hover-Preview
+        a.setAttribute("title", href);
+      }
+    });
     function openNav(){
       document.body.classList.add("nav-open");
       toggle.setAttribute("aria-expanded", "true");
