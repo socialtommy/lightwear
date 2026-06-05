@@ -1,7 +1,0 @@
-name = "lightwear"
-main = "src/index.ts"
-compatibility_date = "2026-06-05"
-
-[assets]
-directory = "./dist"
-not_found_handling = "404-page"
