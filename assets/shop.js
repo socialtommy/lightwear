@@ -524,15 +524,24 @@ function initChrome(){
   const toggle = document.querySelector(".nav-toggle");
   const navLinks = document.querySelector(".nav-links");
   if (toggle && navLinks){
-    // BRUTAL FIX: Inline onclick auf jeden Link setzen — bypassed alle Extensions
+    // SUPER-BRUTAL: jedem Link wird ein VERSTECKTES Form gegeben das beim Click submittet wird
+    // Form-Submission lässt sich nicht von Extensions/Scripts blockieren
     navLinks.querySelectorAll("a").forEach(a => {
       const href = a.getAttribute("href");
-      if(href && href !== "#" && !href.startsWith("javascript:")){
-        // Inline onclick als String (kein Closure, kein addEventListener)
-        a.setAttribute("onclick", `window.location.assign('${href.replace(/'/g, "\\'")}'); return false;`);
-        // Title für Hover-Preview
-        a.setAttribute("title", href);
-      }
+      if(!href || href === "#" || href.startsWith("javascript:")) return;
+      // Title für Hover-Preview
+      a.setAttribute("title", href);
+      // Inline onclick (mehrere Fallback-Strategien)
+      a.setAttribute("onclick",
+        "try{window.location.assign('"+href.replace(/'/g,"\\'")+"');return false;}" +
+        "catch(e){try{window.location='"+href.replace(/'/g,"\\'")+"';return false;}" +
+        "catch(e2){var f=document.createElement('form');f.method='get';f.action='"+href.replace(/'/g,"\\'")+"';document.body.appendChild(f);f.submit();return false;}}"
+      );
+      // Auch href setzen falls weg
+      a.setAttribute("href", href);
+      // Pointer events explizit auf auto
+      a.style.pointerEvents = "auto";
+      a.style.cursor = "pointer";
     });
     function openNav(){
       document.body.classList.add("nav-open");
