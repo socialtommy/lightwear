@@ -3071,7 +3071,7 @@ body.sticky-buy-active .social-proof{
   .page-hero { padding: 26px 0; }
   .page-hero h1 { font-size: clamp(1.8rem, 7vw, 2.4rem) !important; line-height: 1.1; }
   .page-hero .lead { font-size: .96rem; }
-  .prose { padding: 0 !important; }
+  .prose { padding-block: 0 !important; }
   .prose h2 { font-size: 1.3rem !important; }
   .prose p { font-size: .92rem; line-height: 1.6; }
 }
@@ -3126,12 +3126,13 @@ body.sticky-buy-active .social-proof{
   /* Mobiles Wrap: nicht zu viel Padding (sonst weniger Platz für Inhalt) */
   .wrap { padding-inline: 16px !important; }
 
-  /* Size-Tabelle: kompakter, horizontal scrollbar als Fallback */
+  /* Size-Tabelle: kompakter, voll im Container */
   .size-table {
     font-size: .82rem;
-    margin: 18px -4px !important;
-    width: calc(100% + 8px);
+    margin: 18px 0 !important;
+    width: 100% !important;
     border-radius: 10px !important;
+    table-layout: fixed;
   }
   .size-table th, .size-table td {
     padding: 9px 6px !important;
@@ -3151,8 +3152,8 @@ body.sticky-buy-active .social-proof{
   /* Lange Header umbrechen lassen */
   .size-table th { word-break: break-word; hyphens: auto; }
 
-  /* Prose-Container nicht zusätzlich einklammern */
-  .prose { padding: 0 !important; max-width: 100% !important; }
+  /* Prose-Container nicht zusätzlich einklammern (padding-inline lassen wir vom .wrap kommen) */
+  .prose { padding-block: 0 !important; max-width: 100% !important; }
   .prose h2 { font-size: 1.25rem !important; margin: 24px 0 8px !important; line-height: 1.2; }
   .prose p { font-size: .92rem; line-height: 1.55; margin: 0 0 14px; }
   .prose ul, .prose ol { padding-left: 22px; }
